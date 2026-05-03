@@ -4,8 +4,8 @@
   "scripts": {
     "install:all": "npm install --prefix backend --legacy-peer-deps && npm install --prefix frontend --legacy-peer-deps",
     "build:frontend": "cd frontend && npm install --legacy-peer-deps && npm run build",
-    "build:backend": "cd backend && npm install --legacy-peer-deps && npx prisma generate",
+    "build:backend": "cd backend && npm install --legacy-peer-deps && npx prisma@5.22.0 generate",
     "build": "npm run build:frontend && npm run build:backend",
-    "start": "if [ -z \"$DATABASE_URL\" ]; then echo 'ERROR: DATABASE_URL is missing. Please link your Postgres service in Railway variables.'; exit 1; fi && npx prisma db push --accept-data-loss --schema=backend/prisma/schema.prisma && cd backend && npm start"
+    "start": "if [ -z \"$DATABASE_URL\" ]; then echo 'ERROR: DATABASE_URL is missing. Please link your Postgres service in Railway variables.'; exit 1; fi && npx prisma@5.22.0 db push --accept-data-loss --schema=backend/prisma/schema.prisma && cd backend && npm start"
   }
 }
