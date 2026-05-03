@@ -21,7 +21,7 @@ export const CheckIn: React.FC = () => {
             lng: position.coords.longitude
           });
         },
-        err => {
+        _err => {
           setError('Location access denied. Please allow location to check in.');
         }
       );
@@ -113,12 +113,12 @@ export const CheckIn: React.FC = () => {
         setError(data.error || 'Check-in failed');
       }
 
-    } catch (err) {
+    } catch (_err) {
       setError('Network error');
     }
   };
 
-  const onScanFailure = (err: any) => {
+  const onScanFailure = (_err: any) => {
     // ignore frequent scan failures
   };
 
