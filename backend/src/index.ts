@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import authRoutes from './routes/auth';
+import path from 'path';
 
 dotenv.config();
 
@@ -21,6 +22,15 @@ app.use('/api/leaderboards', leaderboardRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });
+});
+
+// Serve Frontend
+const frontendPath = path.join(__dirname, '../../frontend/dist');
+app.use(express.static(frontendPath));
+
+app.get('*', (req, res) => {
+  if (req.path.startsWith('/api')) return res.status(404).json({ error: 'API route not found' });
+  res.sendFile(path.join(frontendPath, 'index.html'));
 });
 
 app.listen(PORT, () => {
