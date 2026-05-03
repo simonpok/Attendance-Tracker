@@ -118,7 +118,7 @@ export const CheckIn: React.FC = () => {
     }
   };
 
-  const onScanFailure = (error: any) => {
+  const onScanFailure = (err: any) => {
     // ignore frequent scan failures
   };
 

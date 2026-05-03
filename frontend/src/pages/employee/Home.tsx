@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 
 export const Home: React.FC = () => {
-  const { token, user } = useAuth();
+  const { token } = useAuth();
   const navigate = useNavigate();
   const [stats, setStats] = useState<any>(null);
   const [manualTime, setManualTime] = useState('');

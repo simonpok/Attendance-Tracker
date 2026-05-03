@@ -35,7 +35,7 @@ export const Records: React.FC = () => {
     fetchRecords();
   }, []);
 
-  const handleDownload = (type: 'xml' | 'pdf') => {
+  const handleDownload = (type: 'excel' | 'pdf') => {
     if (!records.length) return;
 
     // Prepare flat data for export
@@ -56,7 +56,7 @@ export const Records: React.FC = () => {
   };
 
   // Group records by date, then by user
-  const grouped = records.reduce((acc: any, rec) => {
+  const grouped: { [key: string]: { [key: string]: { user: Record['user'], sessions: Record[] } } } = records.reduce((acc: any, rec) => {
     if (filterDate && rec.date !== filterDate) return acc;
     
     if (!acc[rec.date]) acc[rec.date] = {};

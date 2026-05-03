@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { downloadCSV, downloadPDF, downloadExcel } from '../../utils/exportUtils';
-import { FileText, Download, FileSpreadsheet, FileCode2 } from 'lucide-react';
+import { FileText, Download, FileSpreadsheet } from 'lucide-react';
 import { format } from 'date-fns';
 
 export const ExportWidget: React.FC = () => {
