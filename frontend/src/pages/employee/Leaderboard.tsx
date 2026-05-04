@@ -9,7 +9,7 @@ export const Leaderboard: React.FC = () => {
   useEffect(() => {
     if (!token) return;
     
-    fetch(`${import.meta.env.VITE_API_URL}/api/leaderboards`, {
+    fetch(`${import.meta.env.VITE_API_URL || ""}/api/leaderboards`, {
       headers: { Authorization: `Bearer ${token}` }
     })
     .then(res => res.json())

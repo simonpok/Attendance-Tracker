@@ -24,7 +24,7 @@ export const Employees: React.FC = () => {
   const [phone, setPhone] = useState('');
 
   const fetchEmployees = async () => {
-    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/employees`, {
+    const res = await fetch(`${import.meta.env.VITE_API_URL || ""}/api/admin/employees`, {
       headers: { Authorization: `Bearer ${token}` }
     });
     const data = await res.json();
@@ -37,7 +37,7 @@ export const Employees: React.FC = () => {
 
   const handleAddEmployee = async (e: React.FormEvent) => {
     e.preventDefault();
-    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/employees`, {
+    const res = await fetch(`${import.meta.env.VITE_API_URL || ""}/api/admin/employees`, {
       method: 'POST',
       headers: { 
         'Content-Type': 'application/json',
@@ -55,7 +55,7 @@ export const Employees: React.FC = () => {
   };
 
   const toggleStatus = async (id: string, currentStatus: boolean) => {
-    await fetch(`${import.meta.env.VITE_API_URL}/api/admin/employees/${id}/status`, {
+    await fetch(`${import.meta.env.VITE_API_URL || ""}/api/admin/employees/${id}/status`, {
       method: 'PUT',
       headers: { 
         'Content-Type': 'application/json',
@@ -68,7 +68,7 @@ export const Employees: React.FC = () => {
 
   const handleDeleteEmployee = async (id: string, name: string) => {
     if (window.confirm(`Are you sure you want to delete ${name}? All their attendance records will be permanently removed.`)) {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/employees/${id}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || ""}/api/admin/employees/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       });

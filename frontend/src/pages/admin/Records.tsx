@@ -24,7 +24,7 @@ export const Records: React.FC = () => {
   const { token } = useAuth();
 
   const fetchRecords = async () => {
-    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/records`, {
+    const res = await fetch(`${import.meta.env.VITE_API_URL || ""}/api/admin/records`, {
       headers: { Authorization: `Bearer ${token}` }
     });
     const data = await res.json();

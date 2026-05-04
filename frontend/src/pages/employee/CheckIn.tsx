@@ -65,7 +65,7 @@ export const CheckIn: React.FC = () => {
 
     try {
       // First try to check in
-      let res = await fetch(`${import.meta.env.VITE_API_URL}/api/attendance/check-in`, {
+      let res = await fetch(`${import.meta.env.VITE_API_URL || ""}/api/attendance/check-in`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -88,7 +88,7 @@ export const CheckIn: React.FC = () => {
 
       // If already checked in today, try to check out
       if (data.error === 'Already checked in today') {
-        res = await fetch(`${import.meta.env.VITE_API_URL}/api/attendance/check-out`, {
+        res = await fetch(`${import.meta.env.VITE_API_URL || ""}/api/attendance/check-out`, {
           method: 'POST',
           headers: { 
             'Content-Type': 'application/json',

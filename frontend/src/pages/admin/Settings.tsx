@@ -13,7 +13,7 @@ export const Settings: React.FC = () => {
   });
 
   const fetchSettings = async () => {
-    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/settings`, {
+    const res = await fetch(`${import.meta.env.VITE_API_URL || ""}/api/admin/settings`, {
       headers: { Authorization: `Bearer ${token}` }
     });
     const data = await res.json();
@@ -26,7 +26,7 @@ export const Settings: React.FC = () => {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    await fetch(`${import.meta.env.VITE_API_URL}/api/admin/settings`, {
+    await fetch(`${import.meta.env.VITE_API_URL || ""}/api/admin/settings`, {
       method: 'PUT',
       headers: { 
         'Content-Type': 'application/json',

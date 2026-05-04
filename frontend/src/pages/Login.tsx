@@ -15,14 +15,32 @@ export const Login: React.FC = () => {
     e.preventDefault();
     setError('');
     
+    const apiUrl = `${import.meta.env.VITE_API_URL || ""}/api/auth/login`.replace(/\/+/g, '/');
+    if (!apiUrl.startsWith('http') && !apiUrl.startsWith('/')) {
+      // Ensure it's at least a relative path if not absolute
+      apiUrl = '/' + apiUrl;
+    }
+
+    console.log(`[Debug] Attempting login to: ${apiUrl}`);
+    
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/login`, {
+      const res = await fetch(apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password, role }),
       });
 
-      const data = await res.json();
+      console.log(`[Debug] Response status: ${res.status}`);
+      const contentType = res.headers.get("content-type");
+      
+      let data;
+      if (contentType && contentType.includes("application/json")) {
+        data = await res.json();
+      } else {
+        const text = await res.text();
+        console.error(`[Debug] Expected JSON but got: ${text.substring(0, 100)}`);
+        throw new Error('Server returned non-JSON response');
+      }
       
       if (!res.ok) {
         setError(data.error || 'Login failed');
@@ -31,8 +49,9 @@ export const Login: React.FC = () => {
 
       login(data.token, data.user);
       navigate(role === 'ADMIN' ? '/admin' : '/employee');
-    } catch (err) {
-      setError('Network error. Please try again.');
+    } catch (err: any) {
+      console.error('[Debug] Login error:', err);
+      setError(`Network error: ${err.message || 'Please try again'}`);
     }
   };
 

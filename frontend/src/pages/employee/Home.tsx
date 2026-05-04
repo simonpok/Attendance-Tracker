@@ -10,7 +10,7 @@ export const Home: React.FC = () => {
   const [manualTime, setManualTime] = useState('');
 
   const fetchStats = async () => {
-    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/attendance/me`, {
+    const res = await fetch(`${import.meta.env.VITE_API_URL || ""}/api/attendance/me`, {
       headers: { Authorization: `Bearer ${token}` }
     });
     const data = await res.json();
@@ -27,7 +27,7 @@ export const Home: React.FC = () => {
     e.preventDefault();
     if (!stats?.missedCheckout) return;
 
-    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/attendance/manual-check-out`, {
+    const res = await fetch(`${import.meta.env.VITE_API_URL || ""}/api/attendance/manual-check-out`, {
       method: 'POST',
       headers: { 
         'Content-Type': 'application/json',

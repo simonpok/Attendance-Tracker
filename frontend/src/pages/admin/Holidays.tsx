@@ -13,7 +13,7 @@ export const Holidays: React.FC = () => {
   const { token } = useAuth();
 
   const fetchHolidays = async () => {
-    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/attendance/holidays`, {
+    const res = await fetch(`${import.meta.env.VITE_API_URL || ""}/api/attendance/holidays`, {
       headers: { Authorization: `Bearer ${token}` }
     });
     const data = await res.json();
@@ -27,7 +27,7 @@ export const Holidays: React.FC = () => {
   }, [token]);
 
   const handleAdd = async (date: string, name: string) => {
-    await fetch(`${import.meta.env.VITE_API_URL}/api/admin/holidays`, {
+    await fetch(`${import.meta.env.VITE_API_URL || ""}/api/admin/holidays`, {
       method: 'POST',
       headers: { 
         'Content-Type': 'application/json',
@@ -40,7 +40,7 @@ export const Holidays: React.FC = () => {
 
   const handleDelete = async (id: string) => {
     if (confirm('Delete this holiday?')) {
-      await fetch(`${import.meta.env.VITE_API_URL}/api/admin/holidays/${id}`, {
+      await fetch(`${import.meta.env.VITE_API_URL || ""}/api/admin/holidays/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       });

@@ -14,7 +14,7 @@ export const Holidays: React.FC = () => {
 
   useEffect(() => {
     if (!token) return;
-    fetch(`${import.meta.env.VITE_API_URL}/api/attendance/holidays`, {
+    fetch(`${import.meta.env.VITE_API_URL || ""}/api/attendance/holidays`, {
       headers: { Authorization: `Bearer ${token}` }
     })
     .then(res => res.json())

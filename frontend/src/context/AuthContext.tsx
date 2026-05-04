@@ -26,7 +26,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     if (token) {
       // Validate token and fetch user details
-      fetch(`${import.meta.env.VITE_API_URL}/api/auth/me`, {
+      fetch(`${import.meta.env.VITE_API_URL || ""}/api/auth/me`, {
         headers: { Authorization: `Bearer ${token}` }
       })
       .then(res => res.json())

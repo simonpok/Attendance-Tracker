@@ -27,10 +27,10 @@ export const DashboardHome: React.FC = () => {
   const fetchData = async () => {
     try {
       const [recordsRes, employeesRes] = await Promise.all([
-        fetch(`${import.meta.env.VITE_API_URL}/api/admin/records`, {
+        fetch(`${import.meta.env.VITE_API_URL || ""}/api/admin/records`, {
           headers: { Authorization: `Bearer ${token}` }
         }),
-        fetch(`${import.meta.env.VITE_API_URL}/api/admin/employees`, {
+        fetch(`${import.meta.env.VITE_API_URL || ""}/api/admin/employees`, {
           headers: { Authorization: `Bearer ${token}` }
         })
       ]);

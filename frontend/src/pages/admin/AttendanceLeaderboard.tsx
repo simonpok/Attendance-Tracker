@@ -16,7 +16,7 @@ export const AttendanceLeaderboard: React.FC = () => {
   useEffect(() => {
     const fetchLeaderboard = async () => {
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/leaderboards`, {
+        const res = await fetch(`${import.meta.env.VITE_API_URL || ""}/api/leaderboards`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         const result = await res.json();

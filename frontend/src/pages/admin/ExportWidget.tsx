@@ -17,15 +17,15 @@ export const ExportWidget: React.FC = () => {
       let title = '';
 
       if (dataset === 'employees') {
-        url = `${import.meta.env.VITE_API_URL}/api/admin/employees`;
+        url = `${import.meta.env.VITE_API_URL || ""}/api/admin/employees`;
         dataName = 'Employees';
         title = 'Employee Directory';
       } else if (dataset === 'records') {
-        url = `${import.meta.env.VITE_API_URL}/api/admin/records`;
+        url = `${import.meta.env.VITE_API_URL || ""}/api/admin/records`;
         dataName = 'AttendanceRecords';
         title = 'Global Attendance Records';
       } else if (dataset === 'leaderboard') {
-        url = `${import.meta.env.VITE_API_URL}/api/leaderboards`;
+        url = `${import.meta.env.VITE_API_URL || ""}/api/leaderboards`;
         dataName = 'Leaderboard';
         title = 'Leaderboards - Highest Attendance';
       }
