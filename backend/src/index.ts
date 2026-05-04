@@ -52,7 +52,7 @@ if (fs.existsSync(frontendPath)) {
 
 app.use(express.static(frontendPath));
 
-app.get('/*path', (req, res) => {
+app.get('/:path*', (req, res) => {
   if (req.path.startsWith('/api')) return res.status(404).json({ error: 'API route not found' });
   const indexPath = path.join(frontendPath, 'index.html');
   if (fs.existsSync(indexPath)) {

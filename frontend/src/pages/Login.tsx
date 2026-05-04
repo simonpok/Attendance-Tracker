@@ -15,11 +15,10 @@ export const Login: React.FC = () => {
     e.preventDefault();
     setError('');
     
-    const apiUrl = `${import.meta.env.VITE_API_URL || ""}/api/auth/login`.replace(/\/+/g, '/');
-    if (!apiUrl.startsWith('http') && !apiUrl.startsWith('/')) {
-      // Ensure it's at least a relative path if not absolute
-      apiUrl = '/' + apiUrl;
-    }
+    const baseUrl = import.meta.env.VITE_API_URL || "";
+    const endpoint = "/api/auth/login";
+    const apiUrl = baseUrl.replace(/\/$/, '') + '/' + endpoint.replace(/^\//, '');
+
 
     console.log(`[Debug] Attempting login to: ${apiUrl}`);
     
@@ -51,7 +50,11 @@ export const Login: React.FC = () => {
       navigate(role === 'ADMIN' ? '/admin' : '/employee');
     } catch (err: any) {
       console.error('[Debug] Login error:', err);
-      setError(`Network error: ${err.message || 'Please try again'}`);
+      if (err.name === 'TypeError' && err.message === 'Failed to fetch') {
+        setError(`Network error: Cannot reach the server at ${apiUrl}. Please check if the backend is running.`);
+      } else {
+        setError(`Error: ${err.message || 'Please try again'}`);
+      }
     }
   };
 
