@@ -26,20 +26,38 @@ import leaderboardRoutes from './routes/leaderboard';
 app.use('/api/leaderboards', leaderboardRoutes);
 
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok' });
+  res.json({ status: 'ok', time: new Date().toISOString() });
 });
 
 // Serve Frontend
 const frontendPath = path.join(__dirname, '../../frontend/dist');
+console.log(`[Diagnostic] Frontend path: ${frontendPath}`);
+import fs from 'fs';
+if (fs.existsSync(frontendPath)) {
+  console.log(`[Diagnostic] Frontend directory exists.`);
+  if (fs.existsSync(path.join(frontendPath, 'index.html'))) {
+    console.log(`[Diagnostic] index.html exists.`);
+  } else {
+    console.warn(`[Diagnostic] index.html NOT found in ${frontendPath}`);
+  }
+} else {
+  console.warn(`[Diagnostic] Frontend directory NOT found at ${frontendPath}`);
+}
+
 app.use(express.static(frontendPath));
 
 app.get('/*path', (req, res) => {
   if (req.path.startsWith('/api')) return res.status(404).json({ error: 'API route not found' });
-  res.sendFile(path.join(frontendPath, 'index.html'));
+  const indexPath = path.join(frontendPath, 'index.html');
+  if (fs.existsSync(indexPath)) {
+    res.sendFile(indexPath);
+  } else {
+    res.status(404).send('Frontend not built. Please check deployment logs.');
+  }
 });
 
-app.listen(PORT, async () => {
-  console.log(`Server is running on port ${PORT}`);
+app.listen(Number(PORT), '0.0.0.0', async () => {
+  console.log(`Server is running on port ${PORT} (0.0.0.0)`);
   try {
     const { prisma } = await import('./db');
     await prisma.$connect();
