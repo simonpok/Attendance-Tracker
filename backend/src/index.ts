@@ -7,6 +7,7 @@ import path from 'path';
 dotenv.config();
 
 const app = express();
+
 const PORT = process.env.PORT || 3000;
 
 if (!process.env.JWT_SECRET) {
@@ -52,7 +53,8 @@ if (fs.existsSync(frontendPath)) {
 
 app.use(express.static(frontendPath));
 
-app.get('/:path*', (req, res) => {
+app.use((req, res, next) => {
+  if (req.method !== 'GET') return next();
   if (req.path.startsWith('/api')) return res.status(404).json({ error: 'API route not found' });
   const indexPath = path.join(frontendPath, 'index.html');
   if (fs.existsSync(indexPath)) {

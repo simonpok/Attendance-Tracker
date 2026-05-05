@@ -14,14 +14,14 @@ export const Login: React.FC = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    
-    const baseUrl = import.meta.env.VITE_API_URL || "";
+
+    const baseUrl = import.meta.env.VITE_API_URL || "https://attendance-tracker-production-7b9e.up.railway.app";
     const endpoint = "/api/auth/login";
     const apiUrl = baseUrl.replace(/\/$/, '') + '/' + endpoint.replace(/^\//, '');
 
 
     console.log(`[Debug] Attempting login to: ${apiUrl}`);
-    
+
     try {
       const res = await fetch(apiUrl, {
         method: 'POST',
@@ -31,7 +31,7 @@ export const Login: React.FC = () => {
 
       console.log(`[Debug] Response status: ${res.status}`);
       const contentType = res.headers.get("content-type");
-      
+
       let data;
       if (contentType && contentType.includes("application/json")) {
         data = await res.json();
@@ -40,7 +40,7 @@ export const Login: React.FC = () => {
         console.error(`[Debug] Expected JSON but got: ${text.substring(0, 100)}`);
         throw new Error('Server returned non-JSON response');
       }
-      
+
       if (!res.ok) {
         setError(data.error || 'Login failed');
         return;
@@ -70,7 +70,7 @@ export const Login: React.FC = () => {
         </div>
 
         <div className="role-selector">
-          <button 
+          <button
             className={`role-btn ${role === 'EMPLOYEE' ? 'active' : ''}`}
             onClick={() => setRole('EMPLOYEE')}
             type="button"
@@ -78,7 +78,7 @@ export const Login: React.FC = () => {
             <UserCircle size={20} />
             Employee
           </button>
-          <button 
+          <button
             className={`role-btn ${role === 'ADMIN' ? 'active' : ''}`}
             onClick={() => setRole('ADMIN')}
             type="button"
@@ -90,28 +90,28 @@ export const Login: React.FC = () => {
 
         <form onSubmit={handleLogin} className="login-form">
           {error && <div className="error-message">{error}</div>}
-          
+
           <div className="input-group">
             <label htmlFor="email">Email Address</label>
-            <input 
-              type="email" 
+            <input
+              type="email"
               id="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Enter your email"
-              required 
+              required
             />
           </div>
-          
+
           <div className="input-group">
             <label htmlFor="password">Password</label>
-            <input 
-              type="password" 
+            <input
+              type="password"
               id="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Enter your password"
-              required 
+              required
             />
           </div>
 
