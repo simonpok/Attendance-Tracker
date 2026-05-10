@@ -15,7 +15,7 @@ export const Login: React.FC = () => {
     e.preventDefault();
     setError('');
 
-    const baseUrl = import.meta.env.VITE_API_URL || "https://attendance-tracker-production-7b9e.up.railway.app";
+    const baseUrl = import.meta.env.VITE_API_URL || "";
     const endpoint = "/api/auth/login";
     const apiUrl = baseUrl.replace(/\/$/, '') + '/' + endpoint.replace(/^\//, '');
 
