@@ -24,16 +24,16 @@
     "jsonwebtoken": "^9.0.3",
     "pg": "^8.20.0",
     "sqlite3": "^6.0.1",
-    "tsx": "^4.21.0"
-  },
-  "devDependencies": {
+    "tsx": "^4.21.0",
     "@types/bcrypt": "^6.0.0",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^25.6.0",
-    "prisma": "5.22.0",
     "typescript": "^6.0.3"
+  },
+  "devDependencies": {
+    "prisma": "5.22.0"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
