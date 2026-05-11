@@ -22,6 +22,7 @@ export const DashboardHome: React.FC = () => {
   const [records, setRecords] = useState<Record[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [filterDate, setFilterDate] = useState<string>(format(new Date(), 'yyyy-MM-dd'));
+  const [isDragging, setIsDragging] = useState(false);
   const { token } = useAuth();
 
   const fetchData = async () => {
@@ -42,6 +43,38 @@ export const DashboardHome: React.FC = () => {
       setEmployees(employeesData);
     } catch (error) {
       console.error('Failed to fetch data', error);
+    }
+  };
+
+  const handleDragStart = (e: React.DragEvent, userId: string) => {
+    e.dataTransfer.setData('userId', userId);
+    setIsDragging(true);
+  };
+
+  const handleDrop = async (e: React.DragEvent, type: 'PRESENT' | 'ABSENT', date: string) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const userId = e.dataTransfer.getData('userId');
+    if (!userId) return;
+
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || ""}/api/admin/records/mark-attendance`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ userId, date, type })
+      });
+      
+      if (res.ok) {
+        fetchData();
+      } else {
+        const err = await res.json();
+        alert(err.error || 'Failed to update attendance');
+      }
+    } catch (error) {
+      console.error('Drop failed', error);
     }
   };
 
@@ -118,14 +151,36 @@ export const DashboardHome: React.FC = () => {
               
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1px', background: '#e2e8f0', border: '1px solid #e2e8f0', borderRadius: '0 0 var(--radius-md) var(--radius-md)', overflow: 'hidden' }}>
                 {/* Left Column: Checked In */}
-                <div style={{ background: 'white', padding: '1.5rem', minHeight: '300px' }}>
+                <div 
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => handleDrop(e, 'PRESENT', date)}
+                  style={{ 
+                    background: 'white', 
+                    padding: '1.5rem', 
+                    minHeight: '300px',
+                    transition: 'all 0.2s ease',
+                    border: isDragging ? '2px dashed #10b981' : 'none'
+                  }}
+                >
                   <h3 style={{ marginBottom: '1.25rem', color: '#10b981', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981' }}></div>
                     Checked In ({checkedInUserIds.size})
                   </h3>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                     {Object.values(dateRecords).map((group: any) => (
-                      <div key={group.user.id} style={{ padding: '1rem', border: '1px solid #f1f5f9', borderRadius: 'var(--radius-md)', background: '#fcfcfc' }}>
+                      <div 
+                        key={group.user.id} 
+                        draggable
+                        onDragStart={(e) => handleDragStart(e, group.user.id)}
+                        onDragEnd={() => setIsDragging(false)}
+                        style={{ 
+                          padding: '1rem', 
+                          border: '1px solid #f1f5f9', 
+                          borderRadius: 'var(--radius-md)', 
+                          background: '#fcfcfc',
+                          cursor: 'grab'
+                        }}
+                      >
                         <div style={{ fontWeight: 600, marginBottom: '0.5rem' }}>{group.user.name}</div>
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
                           {group.sessions.sort((a: any, b: any) => new Date(a.checkInTime).getTime() - new Date(b.checkInTime).getTime()).map((sess: any) => (
@@ -153,22 +208,39 @@ export const DashboardHome: React.FC = () => {
                 </div>
 
                 {/* Right Column: Haven't Checked In */}
-                <div style={{ background: '#f8fafc', padding: '1.5rem', minHeight: '300px' }}>
+                <div 
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => handleDrop(e, 'ABSENT', date)}
+                  style={{ 
+                    background: '#f8fafc', 
+                    padding: '1.5rem', 
+                    minHeight: '300px',
+                    transition: 'all 0.2s ease',
+                    border: isDragging ? '2px dashed #ef4444' : 'none'
+                  }}
+                >
                   <h3 style={{ marginBottom: '1.25rem', color: '#ef4444', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#ef4444' }}></div>
                     Haven't Checked In ({haventCheckedIn.length})
                   </h3>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                     {haventCheckedIn.map(emp => (
-                      <div key={emp.id} style={{ 
-                        padding: '0.75rem 1rem', 
-                        border: '1px solid #e2e8f0', 
-                        borderRadius: 'var(--radius-md)', 
-                        background: 'white',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center'
-                      }}>
+                      <div 
+                        key={emp.id} 
+                        draggable
+                        onDragStart={(e) => handleDragStart(e, emp.id)}
+                        onDragEnd={() => setIsDragging(false)}
+                        style={{ 
+                          padding: '0.75rem 1rem', 
+                          border: '1px solid #e2e8f0', 
+                          borderRadius: 'var(--radius-md)', 
+                          background: 'white',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          cursor: 'grab'
+                        }}
+                      >
                         <div>
                           <div style={{ fontWeight: 500, fontSize: '0.875rem' }}>{emp.name}</div>
                           <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{emp.employeeId}</div>

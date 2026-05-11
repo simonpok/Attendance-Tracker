@@ -144,4 +144,46 @@ router.get('/records', async (req, res) => {
   }
 });
 
+router.post('/records/mark-attendance', async (req, res) => {
+  try {
+    const { userId, date, type } = req.body;
+
+    if (type === 'PRESENT') {
+      // Create a default record for 9:00 AM
+      const checkInTime = new Date(`${date}T09:00:00`);
+      
+      // Check if record already exists
+      const existing = await prisma.attendanceRecord.findFirst({
+        where: { userId, date }
+      });
+
+      if (existing) {
+        return res.json(existing);
+      }
+
+      const record = await prisma.attendanceRecord.create({
+        data: {
+          userId,
+          date,
+          checkInTime,
+          status: 'PRESENT',
+          sessionNumber: 1
+        }
+      });
+      return res.json(record);
+    } else if (type === 'ABSENT') {
+      // Delete all records for this user on this date
+      await prisma.attendanceRecord.deleteMany({
+        where: { userId, date }
+      });
+      return res.json({ success: true });
+    }
+
+    res.status(400).json({ error: 'Invalid type' });
+  } catch (error) {
+    console.error('Manual attendance error:', error);
+    res.status(500).json({ error: 'Failed to mark attendance' });
+  }
+});
+
 export default router;
