@@ -4,7 +4,64 @@ import { prisma } from '../db';
 import { authenticate, requireAdmin } from '../middleware/auth';
 
 const router = Router();
+console.log('Admin routes initialized v3');
 router.use(authenticate, requireAdmin);
+
+router.post('/attendance-records-update', async (req, res) => {
+  try {
+    const { id, checkInTime, checkOutTime } = req.body;
+    console.log('Backend updating record (BODY):', { id, checkInTime, checkOutTime });
+
+    if (!id) return res.status(400).json({ error: 'Record ID is required' });
+
+    const record = await prisma.attendanceRecord.findUnique({ where: { id } });
+    if (!record) {
+      return res.status(404).json({ error: 'Record not found' });
+    }
+
+    const updateData: any = {};
+    if (checkInTime) {
+      updateData.checkInTime = new Date(`${record.date}T${checkInTime}:00`);
+    }
+    if (checkOutTime !== undefined) {
+      updateData.checkOutTime = checkOutTime ? new Date(`${record.date}T${checkOutTime}:00`) : null;
+    }
+
+    const updated = await prisma.attendanceRecord.update({
+      where: { id },
+      data: updateData
+    });
+
+    res.json(updated);
+  } catch (error) {
+    console.error('Failed to update record:', error);
+    res.status(500).json({ error: 'Failed to update record' });
+  }
+});
+
+router.post('/employees/:id/adjust-attendance', async (req, res) => {
+  try {
+    const { adjustment } = req.body;
+    const { id } = req.params;
+    console.log(`[Adjustment Request] User: ${id}, Val: ${adjustment}`);
+    
+    if (isNaN(Number(adjustment))) {
+      return res.status(400).json({ error: 'Adjustment must be a number' });
+    }
+
+    const updated = await prisma.user.update({
+      where: { id },
+      data: { attendanceAdjustment: Number(adjustment) },
+      select: { id: true, name: true, attendanceAdjustment: true }
+    });
+    
+    console.log('[Adjustment Success]', updated);
+    res.json(updated);
+  } catch (error: any) {
+    console.error('[Adjustment Error]', error.message || error);
+    res.status(500).json({ error: 'Failed to adjust attendance' });
+  }
+});
 
 // === EMPLOYEE MANAGEMENT ===
 router.get('/employees', async (req, res) => {
@@ -113,10 +170,14 @@ router.get('/holidays', async (req, res) => {
 
 router.post('/holidays', async (req, res) => {
   try {
-    const { date, name } = req.body;
-    const holiday = await prisma.holiday.create({ data: { date, name } });
+    const { date, name, type } = req.body;
+    console.log('Holiday payload:', { date, name, type });
+    const holiday = await prisma.holiday.create({ 
+      data: { date, name, type: type || 'Holiday' } 
+    });
     res.json(holiday);
   } catch (error) {
+    console.error('Create holiday error:', error);
     res.status(500).json({ error: 'Failed to create holiday' });
   }
 });
@@ -185,5 +246,7 @@ router.post('/records/mark-attendance', async (req, res) => {
     res.status(500).json({ error: 'Failed to mark attendance' });
   }
 });
+
+// No content here, moving it to the top
 
 export default router;

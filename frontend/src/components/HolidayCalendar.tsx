@@ -6,12 +6,13 @@ interface Holiday {
   id: string;
   date: string;
   name: string;
+  type?: string;
 }
 
 interface HolidayCalendarProps {
   holidays: Holiday[];
   isAdmin: boolean;
-  onAddHoliday?: (date: string, name: string) => Promise<void>;
+  onAddHoliday?: (date: string, name: string, type: string) => Promise<void>;
   onDeleteHoliday?: (id: string) => Promise<void>;
 }
 
@@ -24,13 +25,15 @@ export const HolidayCalendar: React.FC<HolidayCalendarProps> = ({
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [date, setDate] = useState('');
   const [name, setName] = useState('');
+  const [type, setType] = useState('Holiday');
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
     if (onAddHoliday) {
-      await onAddHoliday(date, name);
+      await onAddHoliday(date, name, type);
       setDate('');
       setName('');
+      setType('Holiday');
     }
   };
 
@@ -47,6 +50,8 @@ export const HolidayCalendar: React.FC<HolidayCalendarProps> = ({
   const nextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
   const prevMonth = () => setCurrentMonth(subMonths(currentMonth, 1));
 
+  console.log('Holidays in Calendar:', holidays);
+
   return (
     <div className="holiday-calendar-wrapper">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
@@ -59,16 +64,28 @@ export const HolidayCalendar: React.FC<HolidayCalendarProps> = ({
       </div>
       
       {isAdmin && onAddHoliday && (
-        <form className="card" onSubmit={handleAdd} style={{ marginBottom: '2rem', display: 'flex', gap: '1rem', alignItems: 'flex-end' }}>
-          <div className="input-group" style={{ flex: 1, marginBottom: 0 }}>
+        <form className="card" onSubmit={handleAdd} style={{ marginBottom: '2rem', display: 'flex', gap: '1rem', alignItems: 'flex-end', flexWrap: 'wrap' }}>
+          <div className="input-group" style={{ flex: '1 1 200px', marginBottom: 0 }}>
             <label>Date</label>
             <input type="date" value={date} onChange={e => setDate(e.target.value)} required />
           </div>
-          <div className="input-group" style={{ flex: 2, marginBottom: 0 }}>
-            <label>Holiday Name</label>
-            <input type="text" value={name} onChange={e => setName(e.target.value)} required placeholder="e.g. Dashain Festival" />
+          <div className="input-group" style={{ flex: '1 1 200px', marginBottom: 0 }}>
+            <label>Type</label>
+            <select 
+              value={type} 
+              onChange={e => setType(e.target.value)}
+              style={{ width: '100%', padding: '0.75rem', borderRadius: 'var(--radius-md)', border: '1px solid #e2e8f0', background: 'white' }}
+            >
+              <option value="Holiday">Holiday</option>
+              <option value="Event">Event</option>
+              <option value="Recreational Activities">Recreational Activities</option>
+            </select>
           </div>
-          <button type="submit" className="primary-btn" style={{ padding: '0.75rem 1.5rem' }}>Add Holiday</button>
+          <div className="input-group" style={{ flex: '2 1 300px', marginBottom: 0 }}>
+            <label>Name</label>
+            <input type="text" value={name} onChange={e => setName(e.target.value)} required placeholder="e.g. Dashain Festival / Office Party" />
+          </div>
+          <button type="submit" className="primary-btn" style={{ padding: '0.75rem 1.5rem', height: '48px' }}>Add Item</button>
         </form>
       )}
 
@@ -86,6 +103,25 @@ export const HolidayCalendar: React.FC<HolidayCalendarProps> = ({
             const isHoliday = !!holiday || isSat;
             const isCurrentMonth = isSameMonth(day, monthStart);
 
+            // Determine color based on type
+            let bgColor = isCurrentMonth ? 'white' : '#f1f5f9';
+            let labelColor = '#94a3b8'; // Default for Saturday
+            
+            if (holiday && isCurrentMonth) {
+              if (holiday.type === 'Event') {
+                bgColor = '#fffbeb'; // Light gold
+                labelColor = '#f59e0b'; // Golden
+              } else if (holiday.type === 'Recreational Activities') {
+                bgColor = '#faf5ff'; // Light purple
+                labelColor = '#a855f7'; // Purple
+              } else {
+                bgColor = '#fef2f2'; // Light red
+                labelColor = '#ef4444'; // Red
+              }
+            } else if (isSat && isCurrentMonth) {
+              bgColor = '#f8fafc';
+            }
+
             return (
               <div 
                 key={dateStr} 
@@ -96,7 +132,7 @@ export const HolidayCalendar: React.FC<HolidayCalendarProps> = ({
                   borderBottom: '1px solid #e2e8f0',
                   padding: '0.5rem',
                   position: 'relative',
-                  backgroundColor: isHoliday && isCurrentMonth ? '#fef2f2' : (isCurrentMonth ? 'white' : '#f1f5f9'),
+                  backgroundColor: bgColor,
                   color: isCurrentMonth ? 'inherit' : '#94a3b8',
                   transition: 'background-color 0.2s',
                   cursor: isCurrentMonth && isAdmin ? 'pointer' : 'default'
@@ -112,7 +148,7 @@ export const HolidayCalendar: React.FC<HolidayCalendarProps> = ({
                     style={{ 
                       marginTop: '0.4rem', 
                       padding: '0.2rem 0.4rem', 
-                      backgroundColor: holiday ? '#ef4444' : '#94a3b8', 
+                      backgroundColor: labelColor, 
                       color: 'white', 
                       fontSize: '0.65rem', 
                       borderRadius: '4px',

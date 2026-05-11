@@ -41,7 +41,7 @@ export const AdminDashboard: React.FC = () => {
           </li>
           <li className={isActive('/admin/holidays')}>
             <Link to="/admin/holidays" style={{ color: 'inherit', textDecoration: 'none', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-              <Calendar size={18} /> Holidays
+              <Calendar size={18} /> Calendar
             </Link>
           </li>
           <li className={isActive('/admin/settings')}>

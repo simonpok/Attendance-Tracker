@@ -23,6 +23,9 @@ export const DashboardHome: React.FC = () => {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [filterDate, setFilterDate] = useState<string>(format(new Date(), 'yyyy-MM-dd'));
   const [isDragging, setIsDragging] = useState(false);
+  const [draggedUserId, setDraggedUserId] = useState<string | null>(null);
+  const [editingRecord, setEditingRecord] = useState<Record | null>(null);
+  const [editForm, setEditForm] = useState({ checkIn: '', checkOut: '' });
   const { token } = useAuth();
 
   const fetchData = async () => {
@@ -47,15 +50,29 @@ export const DashboardHome: React.FC = () => {
   };
 
   const handleDragStart = (e: React.DragEvent, userId: string) => {
-    e.dataTransfer.setData('userId', userId);
+    console.log('Drag Start:', userId);
+    setDraggedUserId(userId);
+    e.dataTransfer.setData('text/plain', userId); // Fallback
+    e.dataTransfer.effectAllowed = 'move';
     setIsDragging(true);
+  };
+
+  const handleDragEnd = () => {
+    console.log('Drag End');
+    setIsDragging(false);
+    setDraggedUserId(null);
   };
 
   const handleDrop = async (e: React.DragEvent, type: 'PRESENT' | 'ABSENT', date: string) => {
     e.preventDefault();
     setIsDragging(false);
-    const userId = e.dataTransfer.getData('userId');
-    if (!userId) return;
+    const userId = draggedUserId || e.dataTransfer.getData('text/plain');
+    console.log('Drop:', { userId, type, date });
+    if (!userId) {
+      console.warn('Drop failed: No userId found in state or dataTransfer');
+      return;
+    }
+    setDraggedUserId(null);
 
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL || ""}/api/admin/records/mark-attendance`, {
@@ -75,6 +92,47 @@ export const DashboardHome: React.FC = () => {
       }
     } catch (error) {
       console.error('Drop failed', error);
+    }
+  };
+
+  const handleEditClick = (record: Record) => {
+    setEditingRecord(record);
+    setEditForm({
+      checkIn: record.checkInTime ? format(new Date(record.checkInTime), 'HH:mm') : '',
+      checkOut: record.checkOutTime ? format(new Date(record.checkOutTime), 'HH:mm') : ''
+    });
+  };
+
+  const handleUpdateRecord = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingRecord) return;
+    console.log('Updating record:', { id: editingRecord.id, form: editForm });
+
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || ""}/api/admin/attendance-records-update`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          id: editingRecord.id,
+          checkInTime: editForm.checkIn,
+          checkOutTime: editForm.checkOut || null
+        })
+      });
+
+      if (res.ok) {
+        console.log('Update successful');
+        setEditingRecord(null);
+        fetchData();
+      } else {
+        const err = await res.json();
+        console.error('Update failed:', err);
+        alert(err.error || 'Failed to update record');
+      }
+    } catch (error) {
+      console.error('Update fetch error:', error);
     }
   };
 
@@ -152,14 +210,18 @@ export const DashboardHome: React.FC = () => {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1px', background: '#e2e8f0', border: '1px solid #e2e8f0', borderRadius: '0 0 var(--radius-md) var(--radius-md)', overflow: 'hidden' }}>
                 {/* Left Column: Checked In */}
                 <div 
-                  onDragOver={(e) => e.preventDefault()}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                  }}
                   onDrop={(e) => handleDrop(e, 'PRESENT', date)}
                   style={{ 
                     background: 'white', 
                     padding: '1.5rem', 
                     minHeight: '300px',
                     transition: 'all 0.2s ease',
-                    border: isDragging ? '2px dashed #10b981' : 'none'
+                    outline: isDragging ? '2px dashed #10b981' : 'none',
+                    outlineOffset: '-4px'
                   }}
                 >
                   <h3 style={{ marginBottom: '1.25rem', color: '#10b981', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -170,29 +232,39 @@ export const DashboardHome: React.FC = () => {
                     {Object.values(dateRecords).map((group: any) => (
                       <div 
                         key={group.user.id} 
-                        draggable
+                        draggable={true}
                         onDragStart={(e) => handleDragStart(e, group.user.id)}
-                        onDragEnd={() => setIsDragging(false)}
+                        onDragEnd={handleDragEnd}
                         style={{ 
                           padding: '1rem', 
                           border: '1px solid #f1f5f9', 
                           borderRadius: 'var(--radius-md)', 
                           background: '#fcfcfc',
-                          cursor: 'grab'
+                          cursor: 'grab',
+                          userSelect: 'none'
                         }}
                       >
                         <div style={{ fontWeight: 600, marginBottom: '0.5rem' }}>{group.user.name}</div>
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
                           {group.sessions.sort((a: any, b: any) => new Date(a.checkInTime).getTime() - new Date(b.checkInTime).getTime()).map((sess: any) => (
-                            <div key={sess.id} style={{ 
-                              fontSize: '0.7rem', 
-                              background: '#f0fdf4', 
-                              border: '1px solid #dcfce7',
-                              color: '#166534',
-                              padding: '0.25rem 0.5rem',
-                              borderRadius: '4px',
-                              fontWeight: 500
-                            }}>
+                            <div 
+                              key={sess.id} 
+                              onClick={() => handleEditClick(sess)}
+                              title="Click to edit times"
+                              style={{ 
+                                fontSize: '0.7rem', 
+                                background: '#f0fdf4', 
+                                border: '1px solid #dcfce7',
+                                color: '#166534',
+                                padding: '0.25rem 0.5rem',
+                                borderRadius: '4px',
+                                fontWeight: 500,
+                                cursor: 'pointer',
+                                transition: 'transform 0.1s ease'
+                              }}
+                              onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+                              onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                            >
                               {sess.checkInTime ? format(new Date(sess.checkInTime), 'hh:mm a') : '-'} - {sess.checkOutTime ? format(new Date(sess.checkOutTime), 'hh:mm a') : '...'}
                             </div>
                           ))}
@@ -209,14 +281,18 @@ export const DashboardHome: React.FC = () => {
 
                 {/* Right Column: Haven't Checked In */}
                 <div 
-                  onDragOver={(e) => e.preventDefault()}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                  }}
                   onDrop={(e) => handleDrop(e, 'ABSENT', date)}
                   style={{ 
                     background: '#f8fafc', 
                     padding: '1.5rem', 
                     minHeight: '300px',
                     transition: 'all 0.2s ease',
-                    border: isDragging ? '2px dashed #ef4444' : 'none'
+                    outline: isDragging ? '2px dashed #ef4444' : 'none',
+                    outlineOffset: '-4px'
                   }}
                 >
                   <h3 style={{ marginBottom: '1.25rem', color: '#ef4444', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -227,9 +303,9 @@ export const DashboardHome: React.FC = () => {
                     {haventCheckedIn.map(emp => (
                       <div 
                         key={emp.id} 
-                        draggable
+                        draggable={true}
                         onDragStart={(e) => handleDragStart(e, emp.id)}
-                        onDragEnd={() => setIsDragging(false)}
+                        onDragEnd={handleDragEnd}
                         style={{ 
                           padding: '0.75rem 1rem', 
                           border: '1px solid #e2e8f0', 
@@ -238,7 +314,8 @@ export const DashboardHome: React.FC = () => {
                           display: 'flex',
                           justifyContent: 'space-between',
                           alignItems: 'center',
-                          cursor: 'grab'
+                          cursor: 'grab',
+                          userSelect: 'none'
                         }}
                       >
                         <div>
@@ -260,6 +337,79 @@ export const DashboardHome: React.FC = () => {
           );
         })}
       </div>
+
+      {/* Edit Modal */}
+      {editingRecord && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+          padding: '1rem'
+        }}>
+          <div style={{
+            background: 'white',
+            padding: '2rem',
+            borderRadius: 'var(--radius-lg)',
+            width: '100%',
+            maxWidth: '400px',
+            boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)'
+          }}>
+            <h3 style={{ marginBottom: '1.5rem' }}>Edit Attendance</h3>
+            <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
+              Employee: <strong>{editingRecord.user.name}</strong><br/>
+              Date: <strong>{editingRecord.date}</strong>
+            </p>
+            
+            <form onSubmit={handleUpdateRecord}>
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.5rem' }}>Check-in Time</label>
+                <input 
+                  type="time" 
+                  value={editForm.checkIn}
+                  onChange={(e) => setEditForm({...editForm, checkIn: e.target.value})}
+                  required
+                  style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: 'var(--radius-md)' }}
+                />
+              </div>
+              <div style={{ marginBottom: '2rem' }}>
+                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.5rem' }}>Check-out Time</label>
+                <input 
+                  type="time" 
+                  value={editForm.checkOut}
+                  onChange={(e) => setEditForm({...editForm, checkOut: e.target.value})}
+                  style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: 'var(--radius-md)' }}
+                />
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Leave empty for active session</span>
+              </div>
+              
+              <div style={{ display: 'flex', gap: '1rem' }}>
+                <button 
+                  type="button" 
+                  onClick={() => setEditingRecord(null)}
+                  className="btn-secondary"
+                  style={{ flex: 1 }}
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit" 
+                  className="btn-primary"
+                  style={{ flex: 1 }}
+                >
+                  Save Changes
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

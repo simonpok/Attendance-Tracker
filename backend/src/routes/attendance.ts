@@ -10,6 +10,7 @@ router.use(authenticate);
 router.get('/holidays', async (req: AuthRequest, res) => {
   try {
     const holidays = await prisma.holiday.findMany({ orderBy: { date: 'asc' } });
+    console.log('Sending holidays to frontend:', holidays);
     res.json(holidays);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch holidays' });
@@ -176,6 +177,13 @@ router.get('/me', async (req: AuthRequest, res) => {
       ]
     });
 
+    const user = await prisma.user.findUnique({
+      where: { id: req.user!.userId },
+      select: { attendanceAdjustment: true }
+    });
+
+    const adjustment = user?.attendanceAdjustment || 0;
+
     // Calculate Enhanced Stats
     const holidays = await prisma.holiday.findMany();
     const holidayDates = new Set(holidays.map(h => h.date));
@@ -183,7 +191,7 @@ router.get('/me', async (req: AuthRequest, res) => {
     // Get all unique dates where user was present
     const presentDates = new Set(records.filter(r => r.status === 'PRESENT').map(r => r.date));
     
-    const totalPresent = presentDates.size;
+    const totalPresent = presentDates.size + adjustment;
     let totalAbsent = 0;
     let currentStreak = 0;
 

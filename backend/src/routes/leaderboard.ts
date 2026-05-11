@@ -14,7 +14,7 @@ router.get('/', async (req, res) => {
   try {
     const users = await prisma.user.findMany({
       where: { role: 'EMPLOYEE' },
-      select: { id: true, name: true, attendanceRecords: true }
+      select: { id: true, name: true, attendanceAdjustment: true, attendanceRecords: true }
     });
 
     const holidays = await prisma.holiday.findMany();
@@ -23,7 +23,7 @@ router.get('/', async (req, res) => {
     const leaderboard = users.map(user => {
       const records = user.attendanceRecords;
       const presentDates = new Set(records.filter(r => r.status === 'PRESENT').map(r => r.date));
-      const totalPresent = presentDates.size;
+      const totalPresent = presentDates.size + (user.attendanceAdjustment || 0);
       
       let currentStreak = 0;
       
