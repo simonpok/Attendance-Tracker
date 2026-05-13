@@ -6,17 +6,17 @@
   },
   "scripts": {
     "install:all": "npm install --prefix backend --legacy-peer-deps && npm install --prefix frontend --legacy-peer-deps",
-    "build": "npm run install:all && npm run build:backend && npm run build:frontend",
-    "build:frontend": "cd frontend && npm run build",
-    "build:backend": "cd backend && npx prisma@5.22.0 generate && npm run build",
+    "build": "npm run build:backend && npm run build:frontend",
+    "build:frontend": "cd frontend && npm install && npm run build",
+    "build:backend": "cd backend && npm install && npx prisma generate && npm run build",
     "dev": "concurrently \"npm run dev --prefix backend\" \"npm run dev --prefix frontend\"",
-    "start": "npx prisma@5.22.0 db push --accept-data-loss --schema=backend/prisma/schema.prisma && npx tsx backend/prisma/seed.ts && cd backend && npm start"
+    "start": "npx prisma@5.22.0 db push --accept-data-loss --schema=backend/prisma/schema.prisma && npx prisma@5.22.0 db seed --schema=backend/prisma/schema.prisma && cd backend && npm start"
   },
   "prisma": {
     "seed": "tsx backend/prisma/seed.ts"
   },
   "dependencies": {
-    "@prisma/client": "7.8.0",
+    "@prisma/client": "5.22.0",
     "bcrypt": "6.0.0",
     "tsx": "4.21.0"
   },
