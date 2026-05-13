@@ -208,8 +208,9 @@ router.get('/me', async (req: AuthRequest, res) => {
       const yesterdayDate = addDays(todayDate, -1);
       
       while (curr <= yesterdayDate) {
-        const dStr = format(curr, 'yyyy-MM-dd');
-        const isSat = getDay(curr) === 6;
+        const dStr = formatInTimeZone(curr, TIMEZONE, 'yyyy-MM-dd');
+        const zonedCurr = toZonedTime(curr, TIMEZONE);
+        const isSat = getDay(zonedCurr) === 6;
         const isHolid = holidayDates.has(dStr);
 
         if (!isSat && !isHolid && !presentDates.has(dStr)) {

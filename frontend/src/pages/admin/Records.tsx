@@ -147,8 +147,8 @@ export const Records: React.FC = () => {
               }}>
                 <span style={{ opacity: 0.8 }}>Date:</span> {date}
               </div>
-              <div className="card" style={{ borderRadius: '0 0 var(--radius-md) var(--radius-md)', padding: 0 }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <div className="card table-container" style={{ borderRadius: '0 0 var(--radius-md) var(--radius-md)', padding: 0 }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '600px' }}>
                   <thead>
                     <tr style={{ borderBottom: '1px solid #e2e8f0', background: '#f8fafc' }}>
                       <th style={{ padding: '1rem 1.5rem', textAlign: 'left', width: '30%' }}>Employee</th>

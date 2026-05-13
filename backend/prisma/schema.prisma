@@ -21,6 +21,17 @@ model User {
   attendanceAdjustment Int @default(0)
 
   attendanceRecords AttendanceRecord[]
+  salaryPayments    SalaryPayment[]
+}
+
+model SalaryPayment {
+  id        String   @id @default(uuid())
+  userId    String
+  milestone Int      // 30, 60, 90 etc.
+  clearedAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, milestone])
 }
 
 model AttendanceRecord {

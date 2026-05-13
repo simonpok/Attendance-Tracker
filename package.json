@@ -9,6 +9,7 @@
     "build": "npm run install:all && npm run build:backend && npm run build:frontend",
     "build:frontend": "cd frontend && npm run build",
     "build:backend": "cd backend && npx prisma@5.22.0 generate && npm run build",
+    "dev": "concurrently \"npm run dev --prefix backend\" \"npm run dev --prefix frontend\"",
     "start": "npx prisma@5.22.0 db push --accept-data-loss --schema=backend/prisma/schema.prisma && npx tsx backend/prisma/seed.ts && cd backend && npm start"
   },
   "prisma": {
@@ -18,5 +19,8 @@
     "@prisma/client": "7.8.0",
     "bcrypt": "6.0.0",
     "tsx": "4.21.0"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
   }
 }

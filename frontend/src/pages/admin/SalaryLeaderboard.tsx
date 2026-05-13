@@ -1,15 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { Trophy, Medal, Edit2 } from 'lucide-react';
+import { Coins, Medal, Edit2 } from 'lucide-react';
 
 interface LeaderboardItem {
   id: string;
   name: string;
-  totalPresent: number;
+  salaryCount: number;
   attendanceAdjustment?: number;
 }
 
-export const AttendanceLeaderboard: React.FC = () => {
+export const SalaryLeaderboard: React.FC = () => {
   const [data, setData] = useState<LeaderboardItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [adjustingUser, setAdjustingUser] = useState<LeaderboardItem | null>(null);
@@ -24,16 +24,16 @@ export const AttendanceLeaderboard: React.FC = () => {
       });
       const result = await res.json();
       
-      const sorted = (result.highestAttendance || []).sort((a: any, b: any) => {
-        if (b.totalPresent !== a.totalPresent) {
-          return b.totalPresent - a.totalPresent;
+      const sorted = (result.highestSalary || []).sort((a: any, b: any) => {
+        if (b.salaryCount !== a.salaryCount) {
+          return b.salaryCount - a.salaryCount;
         }
         return a.name.localeCompare(b.name);
       });
 
       setData(sorted);
     } catch (error) {
-      console.error('Failed to fetch leaderboard', error);
+      console.error('Failed to fetch salary leaderboard', error);
     } finally {
       setLoading(false);
     }
@@ -67,6 +67,8 @@ export const AttendanceLeaderboard: React.FC = () => {
       if (res.ok) {
         setAdjustingUser(null);
         fetchLeaderboard();
+        // Also trigger a refresh of the other leaderboard if possible, 
+        // but for now, the user can refresh or we rely on the next fetch.
         window.dispatchEvent(new CustomEvent('refreshLeaderboard'));
       } else {
         alert('Failed to update adjustment');
@@ -78,22 +80,22 @@ export const AttendanceLeaderboard: React.FC = () => {
     }
   };
 
-  if (loading) return <div className="card">Loading leaderboard...</div>;
+  if (loading) return <div className="card">Loading Salary records...</div>;
 
-  const maxCount = data.length > 0 ? Math.max(...data.map(d => d.totalPresent)) : 0;
+  const maxCount = data.length > 0 ? Math.max(...data.map(d => d.salaryCount)) : 0;
 
   return (
-    <div className="card" style={{ padding: '1.5rem' }}>
-      <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem', color: 'var(--primary-color)' }}>
-        <Trophy size={22} color="var(--accent-color)" /> Present (Attendance Count)
+    <div className="card" style={{ padding: '1.5rem', width: '100%' }}>
+      <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem', color: '#6366f1' }}>
+        <Coins size={22} color="#fbbf24" /> Salary / Day Counting (Working Days)
       </h3>
       
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1rem' }}>
         {data.length === 0 ? (
           <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '1rem' }}>No records yet</p>
         ) : (
           data.map((item, index) => {
-            const isTop = item.totalPresent === maxCount && maxCount > 0;
+            const isTop = item.salaryCount === maxCount && maxCount > 0;
             return (
               <div 
                 key={item.id} 
@@ -102,8 +104,8 @@ export const AttendanceLeaderboard: React.FC = () => {
                   alignItems: 'center', 
                   justifyContent: 'space-between',
                   padding: '1rem',
-                  background: isTop ? '#f0fdf4' : 'white',
-                  border: isTop ? '1px solid #10b981' : '1px solid #e2e8f0',
+                  background: isTop ? '#fefce8' : 'white',
+                  border: isTop ? '1px solid #fbbf24' : '1px solid #e2e8f0',
                   borderRadius: 'var(--radius-md)',
                   transition: 'transform 0.2s'
                 }}
@@ -113,7 +115,7 @@ export const AttendanceLeaderboard: React.FC = () => {
                     width: '28px', 
                     height: '28px', 
                     borderRadius: '50%', 
-                    background: isTop ? '#10b981' : '#f1f5f9',
+                    background: isTop ? '#fbbf24' : '#f1f5f9',
                     color: isTop ? 'white' : 'var(--text-muted)',
                     display: 'flex',
                     alignItems: 'center',
@@ -139,7 +141,7 @@ export const AttendanceLeaderboard: React.FC = () => {
                       }}
                       onMouseOver={(e) => e.currentTarget.style.background = '#f1f5f9'}
                       onMouseOut={(e) => e.currentTarget.style.background = 'none'}
-                      title="Adjust attendance manually"
+                      title="Adjust days manually"
                     >
                       <Edit2 size={14} />
                     </button>
@@ -147,13 +149,13 @@ export const AttendanceLeaderboard: React.FC = () => {
                 </div>
                 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  {isTop && <Medal size={16} color="#10b981" />}
+                  {isTop && <Medal size={16} color="#fbbf24" />}
                   <span style={{ 
                     fontWeight: 700, 
-                    color: isTop ? '#10b981' : 'var(--primary-color)',
+                    color: isTop ? '#b45309' : 'var(--primary-color)',
                     fontSize: '1.125rem'
                   }}>
-                    {item.totalPresent}
+                    {item.salaryCount}
                   </span>
                   <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 500 }}>DAYS</span>
                 </div>
@@ -178,7 +180,7 @@ export const AttendanceLeaderboard: React.FC = () => {
           padding: '1rem'
         }}>
           <div style={{ background: 'white', padding: '1.5rem', borderRadius: 'var(--radius-lg)', width: '100%', maxWidth: '320px' }}>
-            <h3 style={{ marginBottom: '1rem' }}>Adjust Attendance</h3>
+            <h3 style={{ marginBottom: '1rem' }}>Adjust Days</h3>
             <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
               Add or subtract days for <strong>{adjustingUser.name}</strong>.
             </p>
@@ -203,8 +205,8 @@ export const AttendanceLeaderboard: React.FC = () => {
         </div>
       )}
       
-      <div style={{ marginTop: '1.5rem', padding: '0.75rem', background: '#f8fafc', borderRadius: 'var(--radius-md)', fontSize: '0.75rem', color: 'var(--text-muted)', textAlign: 'center' }}>
-        Updated live based on total successful check-ins
+      <div style={{ marginTop: '1.5rem', padding: '0.75rem', background: '#fefce8', borderRadius: 'var(--radius-md)', fontSize: '0.75rem', color: '#b45309', textAlign: 'center', fontWeight: 500 }}>
+        Rules: Check-ins + (Saturdays & Holidays credit) + Manual Adjustments
       </div>
     </div>
   );

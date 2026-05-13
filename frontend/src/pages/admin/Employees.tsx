@@ -82,7 +82,7 @@ export const Employees: React.FC = () => {
 
   return (
     <div className="employees-container">
-      <div className="header-actions" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
+      <div className="header-actions" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
         <h2>Employee Management</h2>
         <button className="primary-btn" onClick={() => setShowAdd(!showAdd)}>
           {showAdd ? 'Cancel' : '+ Add Employee'}
@@ -92,7 +92,7 @@ export const Employees: React.FC = () => {
       {showAdd && (
         <form className="card" onSubmit={handleAddEmployee} style={{ marginBottom: '2rem' }}>
           <h3>Add New Employee</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '1rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem', marginTop: '1rem' }}>
             <div className="input-group">
               <label>Name</label>
               <input value={name} onChange={e => setName(e.target.value)} required />
@@ -118,8 +118,8 @@ export const Employees: React.FC = () => {
         </form>
       )}
 
-      <div className="card">
-        <table style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse' }}>
+      <div className="card table-container" style={{ padding: 0 }}>
+        <table style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse', minWidth: '600px' }}>
           <thead>
             <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
               <th style={{ padding: '1rem' }}>Name</th>

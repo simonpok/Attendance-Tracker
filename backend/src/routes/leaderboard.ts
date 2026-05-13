@@ -14,7 +14,7 @@ router.get('/', async (req, res) => {
   try {
     const users = await prisma.user.findMany({
       where: { role: 'EMPLOYEE' },
-      select: { id: true, name: true, attendanceAdjustment: true, attendanceRecords: true }
+      select: { id: true, name: true, attendanceAdjustment: true, attendanceRecords: true, createdAt: true }
     });
 
     const holidays = await prisma.holiday.findMany();
@@ -27,14 +27,40 @@ router.get('/', async (req, res) => {
       
       let currentStreak = 0;
       
+      // Salary counting logic
+      let salaryCount = 0;
+      const now = new Date();
+      const todayStr = formatInTimeZone(now, TIMEZONE, 'yyyy-MM-dd');
+      
+      // Use user.createdAt as the join date
+      const startDate = toZonedTime(user.createdAt, TIMEZONE);
+      let iterDate = startDate;
+      
+      // Limit the loop to avoid infinite loops in case of issues
+      let safetyCounter = 0;
+      while (format(iterDate, 'yyyy-MM-dd') <= todayStr && safetyCounter < 1000) {
+        const dStr = format(iterDate, 'yyyy-MM-dd');
+        const isPresent = presentDates.has(dStr);
+        const isPast = dStr < todayStr;
+        const isSat = getDay(iterDate) === 6;
+        const isHolid = holidayDates.has(dStr);
+        
+        
+        if (isPresent) {
+          salaryCount++;
+        } else if (isPast && (isSat || isHolid)) {
+          salaryCount++;
+        }
+        
+        iterDate = addDays(iterDate, 1);
+        safetyCounter++;
+      }
+      salaryCount += (user.attendanceAdjustment || 0);
+
       if (records.length > 0) {
         // Find first record date
         const sorted = [...records].sort((a, b) => a.date.localeCompare(b.date));
         const firstDate = new Date(sorted[0].date);
-        
-        // Use a consistent "today"
-        const now = new Date();
-        const todayStr = formatInTimeZone(now, TIMEZONE, 'yyyy-MM-dd');
         
         let checkDate = now;
         for (let i = 0; i < 365; i++) {
@@ -61,7 +87,9 @@ router.get('/', async (req, res) => {
         id: user.id,
         name: user.name,
         totalPresent,
-        currentStreak
+        salaryCount,
+        currentStreak,
+        attendanceAdjustment: user.attendanceAdjustment
       };
     });
 
@@ -69,11 +97,13 @@ router.get('/', async (req, res) => {
     const highestAttendance = [...leaderboard].sort((a, b) => b.totalPresent - a.totalPresent).slice(0, 10);
     // Sort by Highest Streak
     const highestStreak = [...leaderboard].sort((a, b) => b.currentStreak - a.currentStreak).slice(0, 10);
+    // Sort by Salary Count
+    const highestSalary = [...leaderboard].sort((a, b) => b.salaryCount - a.salaryCount).slice(0, 10);
 
     const userId = (req as any).user.userId;
     const myStats = leaderboard.find(u => u.id === userId) || null;
 
-    res.json({ highestAttendance, highestStreak, myStats });
+    res.json({ highestAttendance, highestStreak, highestSalary, myStats });
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch leaderboard' });
   }

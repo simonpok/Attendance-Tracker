@@ -54,7 +54,7 @@ export const HolidayCalendar: React.FC<HolidayCalendarProps> = ({
 
   return (
     <div className="holiday-calendar-wrapper">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
         <h2>Holiday Calendar</h2>
         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
           <button onClick={prevMonth} className="icon-btn"><ChevronLeft size={20} /></button>

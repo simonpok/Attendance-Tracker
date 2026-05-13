@@ -24,6 +24,9 @@ app.use((req, res, next) => {
   next();
 });
 
+import notificationRoutes from './routes/notifications';
+app.use('/api/notifications', notificationRoutes);
+
 app.use('/api/auth', authRoutes);
 import adminRoutes from './routes/admin';
 app.use('/api/admin', adminRoutes);
@@ -34,6 +37,20 @@ app.use('/api/leaderboards', leaderboardRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', time: new Date().toISOString() });
+});
+
+import { prisma } from './db';
+import { authenticate, requireAdmin } from './middleware/auth';
+app.post('/api/direct-delete-salary/:id', authenticate, requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    console.log(`[Direct Delete] ID: ${id}`);
+    await prisma.salaryPayment.delete({ where: { id } });
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Direct delete error:', error);
+    res.status(500).json({ error: 'Failed to delete record' });
+  }
 });
 
 // Serve Frontend

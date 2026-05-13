@@ -49,9 +49,18 @@ router.post('/employees/:id/adjust-attendance', async (req, res) => {
       return res.status(400).json({ error: 'Adjustment must be a number' });
     }
 
+    const user = await prisma.user.findUnique({ where: { id } });
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    const currentVal = user.attendanceAdjustment || 0;
+    const change = Number(adjustment) || 0;
+    const newVal = currentVal + change;
+
+    console.log(`[Adjustment] User: ${user.name}, Current: ${currentVal}, Change: ${change}, New: ${newVal}`);
+
     const updated = await prisma.user.update({
       where: { id },
-      data: { attendanceAdjustment: Number(adjustment) },
+      data: { attendanceAdjustment: newVal },
       select: { id: true, name: true, attendanceAdjustment: true }
     });
     
@@ -246,7 +255,5 @@ router.post('/records/mark-attendance', async (req, res) => {
     res.status(500).json({ error: 'Failed to mark attendance' });
   }
 });
-
-// No content here, moving it to the top
 
 export default router;

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { Html5QrcodeScanner } from 'html5-qrcode';
+import { Html5Qrcode } from 'html5-qrcode';
 import { useNavigate } from 'react-router-dom';
 
 export const CheckIn: React.FC = () => {
@@ -10,7 +10,7 @@ export const CheckIn: React.FC = () => {
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const [isScanning, setIsScanning] = useState(false);
-  const scannerRef = useRef<Html5QrcodeScanner | null>(null);
+  const scannerRef = useRef<Html5Qrcode | null>(null);
 
   useEffect(() => {
     if ("geolocation" in navigator) {
@@ -30,13 +30,13 @@ export const CheckIn: React.FC = () => {
     }
 
     return () => {
-      if (scannerRef.current) {
-        scannerRef.current.clear().catch(console.error);
+      if (scannerRef.current && scannerRef.current.isScanning) {
+        scannerRef.current.stop().catch(console.error);
       }
     };
   }, []);
 
-  const startScanner = () => {
+  const startScanner = async () => {
     if (!location) {
       setError('Waiting for location data...');
       return;
@@ -45,21 +45,31 @@ export const CheckIn: React.FC = () => {
     setIsScanning(true);
     setError('');
     
-    // Tiny timeout to let the DOM render the element
-    setTimeout(() => {
-      scannerRef.current = new Html5QrcodeScanner(
-        "qr-reader",
-        { fps: 10, qrbox: { width: 250, height: 250 } },
-        /* verbose= */ false
-      );
-      
-      scannerRef.current.render(onScanSuccess, onScanFailure);
+    setTimeout(async () => {
+      try {
+        const html5QrCode = new Html5Qrcode("qr-reader");
+        scannerRef.current = html5QrCode;
+        
+        const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+        
+        // environment facingMode for back camera on mobile
+        await html5QrCode.start(
+          { facingMode: "environment" }, 
+          config, 
+          onScanSuccess, 
+          onScanFailure
+        );
+      } catch (err: any) {
+        console.error('Camera start error:', err);
+        setError('Could not start camera. Please ensure camera permissions are granted.');
+        setIsScanning(false);
+      }
     }, 100);
   };
 
   const onScanSuccess = async (decodedText: string) => {
-    if (scannerRef.current) {
-      await scannerRef.current.clear();
+    if (scannerRef.current && scannerRef.current.isScanning) {
+      await scannerRef.current.stop();
       setIsScanning(false);
     }
 
@@ -151,11 +161,13 @@ export const CheckIn: React.FC = () => {
           <div>
             <div id="qr-reader" style={{ width: '100%', maxWidth: '400px', margin: '0 auto' }}></div>
             <button 
-              onClick={() => {
-                scannerRef.current?.clear();
+              onClick={async () => {
+                if (scannerRef.current && scannerRef.current.isScanning) {
+                  await scannerRef.current.stop();
+                }
                 setIsScanning(false);
               }}
-              style={{ marginTop: '1rem', color: 'var(--danger-color)', textDecoration: 'underline' }}
+              style={{ marginTop: '1rem', color: 'var(--danger-color)', textDecoration: 'underline', border: 'none', background: 'none', cursor: 'pointer' }}
             >
               Cancel
             </button>

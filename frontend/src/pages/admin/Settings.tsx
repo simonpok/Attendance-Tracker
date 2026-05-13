@@ -38,8 +38,8 @@ export const Settings: React.FC = () => {
   };
 
   return (
-    <div className="settings-container" style={{ display: 'flex', gap: '2rem' }}>
-      <div className="card" style={{ flex: 1 }}>
+    <div className="settings-container" style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
+      <div className="card" style={{ flex: '1 1 350px' }}>
         <h2>Office Location Settings</h2>
         <form onSubmit={handleSave} style={{ marginTop: '1.5rem' }}>
           <div className="input-group">
@@ -80,7 +80,7 @@ export const Settings: React.FC = () => {
         </form>
       </div>
 
-      <div className="card" style={{ flex: 1, textAlign: 'center' }}>
+      <div className="card" style={{ flex: '1 1 350px', textAlign: 'center' }}>
         <h2>Office QR Code</h2>
         <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
           Print this QR code and paste it on the wall for employees to scan.
