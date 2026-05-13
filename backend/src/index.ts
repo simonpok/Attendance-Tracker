@@ -3,6 +3,8 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import authRoutes from './routes/auth';
 import path from 'path';
+import { prisma } from './db';
+import { authenticate, requireAdmin } from './middleware/auth';
 
 dotenv.config();
 
@@ -39,13 +41,11 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', time: new Date().toISOString() });
 });
 
-import { prisma } from './db';
-import { authenticate, requireAdmin } from './middleware/auth';
 app.post('/api/direct-delete-salary/:id', authenticate, requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     console.log(`[Direct Delete] ID: ${id}`);
-    await prisma.salaryPayment.delete({ where: { id } });
+    await prisma.salaryPayment.delete({ where: { id: id as string } });
     res.json({ success: true });
   } catch (error) {
     console.error('Direct delete error:', error);
