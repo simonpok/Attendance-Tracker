@@ -72,6 +72,39 @@ router.post('/employees/:id/adjust-attendance', async (req, res) => {
   }
 });
 
+router.post('/employees/:id/adjust-absent', async (req, res) => {
+  try {
+    const { adjustment } = req.body;
+    const { id } = req.params;
+    console.log(`[Absent Adjustment Request] User: ${id}, Val: ${adjustment}`);
+    
+    if (isNaN(Number(adjustment))) {
+      return res.status(400).json({ error: 'Adjustment must be a number' });
+    }
+
+    const user = await prisma.user.findUnique({ where: { id } });
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    const currentVal = user.absentAdjustment || 0;
+    const change = Number(adjustment) || 0;
+    const newVal = currentVal + change;
+
+    console.log(`[Absent Adjustment] User: ${user.name}, Current: ${currentVal}, Change: ${change}, New: ${newVal}`);
+
+    const updated = await prisma.user.update({
+      where: { id },
+      data: { absentAdjustment: newVal },
+      select: { id: true, name: true, absentAdjustment: true }
+    });
+    
+    console.log('[Absent Adjustment Success]', updated);
+    res.json(updated);
+  } catch (error: any) {
+    console.error('[Absent Adjustment Error]', error.message || error);
+    res.status(500).json({ error: 'Failed to adjust absent days' });
+  }
+});
+
 // === EMPLOYEE MANAGEMENT ===
 router.get('/employees', async (req, res) => {
   try {

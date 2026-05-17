@@ -12,9 +12,10 @@ router.use(authenticate);
 
 router.get('/', async (req, res) => {
   try {
+    const targetMonth = req.query.absentMonth as string; // e.g. "2026-05"
     const users = await prisma.user.findMany({
       where: { role: 'EMPLOYEE' },
-      select: { id: true, name: true, attendanceAdjustment: true, attendanceRecords: true, createdAt: true }
+      select: { id: true, name: true, attendanceAdjustment: true, absentAdjustment: true, attendanceRecords: true, createdAt: true }
     });
 
     const holidays = await prisma.holiday.findMany();
@@ -29,6 +30,7 @@ router.get('/', async (req, res) => {
       
       // Salary counting logic
       let salaryCount = 0;
+      let totalAbsent = user.absentAdjustment || 0;
       const now = new Date();
       const todayStr = formatInTimeZone(now, TIMEZONE, 'yyyy-MM-dd');
       
@@ -46,10 +48,18 @@ router.get('/', async (req, res) => {
         const isHolid = holidayDates.has(dStr);
         
         
+        const isTargetMonth = targetMonth ? dStr.startsWith(targetMonth) : true;
+        
         if (isPresent) {
           salaryCount++;
         } else if (isPast && (isSat || isHolid)) {
           salaryCount++;
+        } 
+        
+        if (isPast && !isSat && !isHolid && !isPresent) {
+          if (isTargetMonth) {
+            totalAbsent++;
+          }
         }
         
         iterDate = addDays(iterDate, 1);
@@ -87,9 +97,11 @@ router.get('/', async (req, res) => {
         id: user.id,
         name: user.name,
         totalPresent,
+        totalAbsent,
         salaryCount,
         currentStreak,
-        attendanceAdjustment: user.attendanceAdjustment
+        attendanceAdjustment: user.attendanceAdjustment,
+        absentAdjustment: user.absentAdjustment
       };
     });
 
@@ -99,11 +111,13 @@ router.get('/', async (req, res) => {
     const highestStreak = [...leaderboard].sort((a, b) => b.currentStreak - a.currentStreak).slice(0, 10);
     // Sort by Salary Count
     const highestSalary = [...leaderboard].sort((a, b) => b.salaryCount - a.salaryCount).slice(0, 10);
+    // Sort by Highest Absent
+    const highestAbsent = [...leaderboard].sort((a, b) => b.totalAbsent - a.totalAbsent).slice(0, 10);
 
     const userId = (req as any).user.userId;
     const myStats = leaderboard.find(u => u.id === userId) || null;
 
-    res.json({ highestAttendance, highestStreak, highestSalary, myStats });
+    res.json({ highestAttendance, highestStreak, highestSalary, highestAbsent, myStats });
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch leaderboard' });
   }

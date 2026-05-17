@@ -179,10 +179,11 @@ router.get('/me', async (req: AuthRequest, res) => {
 
     const user = await prisma.user.findUnique({
       where: { id: req.user!.userId },
-      select: { attendanceAdjustment: true }
+      select: { attendanceAdjustment: true, absentAdjustment: true }
     });
 
     const adjustment = user?.attendanceAdjustment || 0;
+    const absAdjustment = user?.absentAdjustment || 0;
 
     // Calculate Enhanced Stats
     const holidays = await prisma.holiday.findMany();
@@ -192,7 +193,7 @@ router.get('/me', async (req: AuthRequest, res) => {
     const presentDates = new Set(records.filter(r => r.status === 'PRESENT').map(r => r.date));
     
     const totalPresent = presentDates.size + adjustment;
-    let totalAbsent = 0;
+    let totalAbsent = absAdjustment;
     let currentStreak = 0;
 
     if (records.length > 0) {
