@@ -233,6 +233,8 @@ router.get('/me', async (req: AuthRequest, res) => {
     let currentStreak = 0;
 
     if (records.length > 0) {
+      const firstRecord = records[records.length - 1];
+      const firstDate = new Date(firstRecord.date);
       // Calculate Streak (backwards from today)
       let now = new Date();
       // Re-calculate todayStr to ensure perfect sync with 'now'
