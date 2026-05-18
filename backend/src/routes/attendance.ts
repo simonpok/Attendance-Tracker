@@ -179,7 +179,7 @@ router.get('/me', async (req: AuthRequest, res) => {
 
     const user = await prisma.user.findUnique({
       where: { id: req.user!.userId },
-      select: { attendanceAdjustment: true, absentAdjustments: true }
+      select: { attendanceAdjustment: true, absentAdjustments: true, salaryAdjustment: true, createdAt: true }
     });
 
     const adjustment = user?.attendanceAdjustment || 0;
@@ -198,8 +198,34 @@ router.get('/me', async (req: AuthRequest, res) => {
 
     // Get all unique dates where user was present
     const presentDates = new Set(records.filter(r => r.status === 'PRESENT').map(r => r.date));
-    
-    const totalPresent = presentDates.size + adjustment;
+    let salaryCount = 0;
+    if (user) {
+      const now = new Date();
+      const todayStr = formatInTimeZone(now, TIMEZONE, 'yyyy-MM-dd');
+      const startDate = toZonedTime(user.createdAt, TIMEZONE);
+      let iterDate = startDate;
+      let safetyCounter = 0;
+      while (format(iterDate, 'yyyy-MM-dd') <= todayStr && safetyCounter < 1000) {
+        const dStr = format(iterDate, 'yyyy-MM-dd');
+        const isPresent = presentDates.has(dStr);
+        const isPast = dStr < todayStr;
+        const isSat = getDay(iterDate) === 6;
+        const isHolid = holidayDates.has(dStr);
+        
+        if (isPresent) {
+          salaryCount++;
+        } else if (isPast && (isSat || isHolid)) {
+          salaryCount++;
+        } 
+        
+        iterDate = addDays(iterDate, 1);
+        safetyCounter++;
+      }
+      salaryCount += (user.salaryAdjustment || 0);
+    }
+
+    const attendanceCount = presentDates.size + adjustment; // Adjusted check-in days (value: 6)
+    const totalPresent = salaryCount; // Salary days (value: 8)
     let totalAbsent = absAdjustment;
     let currentStreak = 0;
 
@@ -271,7 +297,7 @@ router.get('/me', async (req: AuthRequest, res) => {
     const missedCheckout = yesterdayRecord && yesterdayRecord.checkInTime && !yesterdayRecord.checkOutTime;
 
     res.json({
-      attendanceCount: presentDates.size,
+      attendanceCount,
       totalPresent,
       totalAbsent,
       currentStreak,

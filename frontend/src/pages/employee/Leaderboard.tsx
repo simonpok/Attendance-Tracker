@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { Trophy, Flame, UserCheck, AlertCircle, Clock } from 'lucide-react';
+import { Trophy, Flame, UserCheck, AlertCircle } from 'lucide-react';
 
 export const Leaderboard: React.FC = () => {
   const { token } = useAuth();
@@ -17,14 +17,6 @@ export const Leaderboard: React.FC = () => {
     .catch(console.error);
   }, [token]);
 
-  const formatDuration = (ms: number) => {
-    if (!ms || ms <= 0) return '0h 0m';
-    const totalMinutes = Math.floor(ms / 60000);
-    const hours = Math.floor(totalMinutes / 60);
-    const minutes = totalMinutes % 60;
-    return `${hours}h ${minutes}m`;
-  };
-
   if (!leaderboard) return <div className="loading-spinner">Loading...</div>;
 
   return (
@@ -40,7 +32,7 @@ export const Leaderboard: React.FC = () => {
           {leaderboard.myStats ? (
             <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.25rem 0' }}>
               <span style={{ fontWeight: 500 }}>{leaderboard.myStats.name}</span>
-              <span style={{ fontWeight: 600, color: '#10b981' }}>{leaderboard.myStats.attendanceCount || 0} check-ins</span>
+              <span style={{ fontWeight: 600, color: '#10b981' }}>{leaderboard.myStats.totalPresent || 0} days</span>
             </div>
           ) : (
             <p style={{ color: 'var(--text-muted)' }}>No data available</p>
@@ -55,7 +47,7 @@ export const Leaderboard: React.FC = () => {
           {leaderboard.myStats ? (
             <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.25rem 0' }}>
               <span style={{ fontWeight: 500 }}>{leaderboard.myStats.name}</span>
-              <span style={{ fontWeight: 600, color: 'var(--accent-color)' }}>{leaderboard.myStats.totalPresent} days</span>
+              <span style={{ fontWeight: 600, color: 'var(--accent-color)' }}>{leaderboard.myStats.salaryCount || 0} days</span>
             </div>
           ) : (
             <p style={{ color: 'var(--text-muted)' }}>No data available</p>
@@ -70,7 +62,7 @@ export const Leaderboard: React.FC = () => {
           {leaderboard.myStats ? (
             <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.25rem 0' }}>
               <span style={{ fontWeight: 500 }}>{leaderboard.myStats.name}</span>
-              <span style={{ fontWeight: 600, color: 'var(--danger-color)' }}>{leaderboard.myStats.totalAbsent} days</span>
+              <span style={{ fontWeight: 600, color: 'var(--danger-color)' }}>{leaderboard.myStats.totalAbsent || 0} days</span>
             </div>
           ) : (
             <p style={{ color: 'var(--text-muted)' }}>No data available</p>
@@ -85,22 +77,7 @@ export const Leaderboard: React.FC = () => {
           {leaderboard.myStats ? (
             <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.25rem 0' }}>
               <span style={{ fontWeight: 500 }}>{leaderboard.myStats.name}</span>
-              <span style={{ fontWeight: 600, color: 'orange' }}>{leaderboard.myStats.currentStreak} 🔥</span>
-            </div>
-          ) : (
-            <p style={{ color: 'var(--text-muted)' }}>No data available</p>
-          )}
-        </div>
-
-        {/* 5. Average Presence Time */}
-        <div className="card">
-          <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', color: '#8b5cf6' }}>
-            <Clock size={20} color="#8b5cf6" /> Average Presence
-          </h3>
-          {leaderboard.myStats ? (
-            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.25rem 0' }}>
-              <span style={{ fontWeight: 500 }}>{leaderboard.myStats.name}</span>
-              <span style={{ fontWeight: 600, color: '#8b5cf6' }}>{formatDuration(leaderboard.myStats.averagePresence)}</span>
+              <span style={{ fontWeight: 600, color: 'orange' }}>{leaderboard.myStats.currentStreak || 0} 🔥</span>
             </div>
           ) : (
             <p style={{ color: 'var(--text-muted)' }}>No data available</p>
