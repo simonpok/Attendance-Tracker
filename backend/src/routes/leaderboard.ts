@@ -133,7 +133,8 @@ router.get('/', async (req, res) => {
         attendanceAdjustment: user.attendanceAdjustment,
         absentAdjustments: (user as any).absentAdjustments,
         salaryAdjustment: user.salaryAdjustment,
-        averagePresence
+        averagePresence,
+        attendanceCount: presentDates.size
       };
     });
 

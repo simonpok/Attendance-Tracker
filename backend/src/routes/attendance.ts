@@ -271,6 +271,7 @@ router.get('/me', async (req: AuthRequest, res) => {
     const missedCheckout = yesterdayRecord && yesterdayRecord.checkInTime && !yesterdayRecord.checkOutTime;
 
     res.json({
+      attendanceCount: presentDates.size,
       totalPresent,
       totalAbsent,
       currentStreak,
