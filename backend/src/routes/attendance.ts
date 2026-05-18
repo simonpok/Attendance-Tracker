@@ -179,11 +179,18 @@ router.get('/me', async (req: AuthRequest, res) => {
 
     const user = await prisma.user.findUnique({
       where: { id: req.user!.userId },
-      select: { attendanceAdjustment: true, absentAdjustment: true }
+      select: { attendanceAdjustment: true, absentAdjustments: true }
     });
 
     const adjustment = user?.attendanceAdjustment || 0;
-    const absAdjustment = user?.absentAdjustment || 0;
+    
+    let adjustmentsMap: Record<string, number> = {};
+    try {
+      adjustmentsMap = JSON.parse((user as any)?.absentAdjustments || "{}");
+    } catch (e) {
+      adjustmentsMap = {};
+    }
+    const absAdjustment = Object.values(adjustmentsMap).reduce((acc, val) => acc + val, 0);
 
     // Calculate Enhanced Stats
     const holidays = await prisma.holiday.findMany();

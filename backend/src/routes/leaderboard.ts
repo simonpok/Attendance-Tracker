@@ -15,7 +15,7 @@ router.get('/', async (req, res) => {
     const targetMonth = req.query.absentMonth as string; // e.g. "2026-05"
     const users = await prisma.user.findMany({
       where: { role: 'EMPLOYEE' },
-      select: { id: true, name: true, attendanceAdjustment: true, absentAdjustment: true, attendanceRecords: true, createdAt: true }
+      select: { id: true, name: true, attendanceAdjustment: true, absentAdjustments: true, salaryAdjustment: true, attendanceRecords: true, createdAt: true }
     });
 
     const holidays = await prisma.holiday.findMany();
@@ -30,7 +30,20 @@ router.get('/', async (req, res) => {
       
       // Salary counting logic
       let salaryCount = 0;
-      let totalAbsent = user.absentAdjustment || 0;
+      let adjustmentsMap: Record<string, number> = {};
+      try {
+        adjustmentsMap = JSON.parse((user as any).absentAdjustments || "{}");
+      } catch (e) {
+        adjustmentsMap = {};
+      }
+      
+      let totalAbsent = 0;
+      if (targetMonth) {
+        totalAbsent = adjustmentsMap[targetMonth] || 0;
+      } else {
+        totalAbsent = Object.values(adjustmentsMap).reduce((acc, val) => acc + val, 0);
+      }
+      
       const now = new Date();
       const todayStr = formatInTimeZone(now, TIMEZONE, 'yyyy-MM-dd');
       
@@ -65,7 +78,7 @@ router.get('/', async (req, res) => {
         iterDate = addDays(iterDate, 1);
         safetyCounter++;
       }
-      salaryCount += (user.attendanceAdjustment || 0);
+      salaryCount += (user.salaryAdjustment || 0);
 
       if (records.length > 0) {
         // Find first record date
@@ -93,6 +106,23 @@ router.get('/', async (req, res) => {
         }
       }
 
+      // Calculate Average Presence Time
+      const dailyPresenceDurations: Record<string, number> = {};
+      records.forEach(r => {
+        if (r.checkInTime && r.checkOutTime) {
+          const checkIn = new Date(r.checkInTime).getTime();
+          const checkOut = new Date(r.checkOutTime).getTime();
+          const duration = checkOut - checkIn;
+          if (duration > 0) {
+            dailyPresenceDurations[r.date] = (dailyPresenceDurations[r.date] || 0) + duration;
+          }
+        }
+      });
+
+      const presenceDays = Object.keys(dailyPresenceDurations).length;
+      const totalPresenceMs = Object.values(dailyPresenceDurations).reduce((acc, val) => acc + val, 0);
+      const averagePresence = presenceDays > 0 ? Math.round(totalPresenceMs / presenceDays) : 0;
+
       return {
         id: user.id,
         name: user.name,
@@ -101,7 +131,9 @@ router.get('/', async (req, res) => {
         salaryCount,
         currentStreak,
         attendanceAdjustment: user.attendanceAdjustment,
-        absentAdjustment: user.absentAdjustment
+        absentAdjustments: (user as any).absentAdjustments,
+        salaryAdjustment: user.salaryAdjustment,
+        averagePresence
       };
     });
 
@@ -113,11 +145,13 @@ router.get('/', async (req, res) => {
     const highestSalary = [...leaderboard].sort((a, b) => b.salaryCount - a.salaryCount).slice(0, 10);
     // Sort by Highest Absent
     const highestAbsent = [...leaderboard].sort((a, b) => b.totalAbsent - a.totalAbsent).slice(0, 10);
+    // Sort by Highest Presence Time
+    const highestPresence = [...leaderboard].sort((a, b) => b.averagePresence - a.averagePresence).slice(0, 10);
 
     const userId = (req as any).user.userId;
     const myStats = leaderboard.find(u => u.id === userId) || null;
 
-    res.json({ highestAttendance, highestStreak, highestSalary, highestAbsent, myStats });
+    res.json({ highestAttendance, highestStreak, highestSalary, highestAbsent, highestPresence, myStats });
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch leaderboard' });
   }

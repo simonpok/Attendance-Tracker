@@ -6,7 +6,7 @@ interface LeaderboardItem {
   id: string;
   name: string;
   salaryCount: number;
-  attendanceAdjustment?: number;
+  salaryAdjustment?: number;
 }
 
 export const SalaryLeaderboard: React.FC = () => {
@@ -55,7 +55,7 @@ export const SalaryLeaderboard: React.FC = () => {
     if (!adjustingUser || isSaving) return;
     setIsSaving(true);
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL || ""}/api/admin/employees/${adjustingUser.id}/adjust-attendance`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || ""}/api/admin/employees/${adjustingUser.id}/adjust-salary`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

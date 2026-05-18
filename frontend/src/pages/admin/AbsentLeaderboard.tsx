@@ -67,7 +67,7 @@ export const AbsentLeaderboard: React.FC = () => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ adjustment: adjustmentValue })
+        body: JSON.stringify({ adjustment: adjustmentValue, month: filterMonth })
       });
       
       if (res.ok) {

@@ -19,7 +19,8 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   attendanceAdjustment Int @default(0)
-  absentAdjustment Int @default(0)
+  absentAdjustments String @default("{}")
+  salaryAdjustment Int @default(0)
 
   attendanceRecords AttendanceRecord[]
   salaryPayments    SalaryPayment[]

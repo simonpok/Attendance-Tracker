@@ -10,6 +10,7 @@ import { AttendanceLeaderboard } from './AttendanceLeaderboard';
 import { DashboardHome } from './DashboardHome';
 import { SalaryLeaderboard } from './SalaryLeaderboard';
 import { AbsentLeaderboard } from './AbsentLeaderboard';
+import { PresenceLeaderboard } from './PresenceLeaderboard';
 import { Notifications } from './Notifications';
 import { LogoutConfirmModal } from '../../components/LogoutConfirmModal';
 
@@ -143,6 +144,9 @@ export const AdminDashboard: React.FC = () => {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', alignItems: 'start' }}>
                 <SalaryLeaderboard />
                 <AbsentLeaderboard />
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1.5rem', alignItems: 'start' }}>
+                <PresenceLeaderboard />
               </div>
             </div>
           } />

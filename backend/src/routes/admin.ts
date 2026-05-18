@@ -2,6 +2,9 @@ import { Router } from 'express';
 import bcrypt from 'bcrypt';
 import { prisma } from '../db';
 import { authenticate, requireAdmin } from '../middleware/auth';
+import { formatInTimeZone } from 'date-fns-tz';
+
+const TIMEZONE = 'Asia/Kathmandu';
 
 const router = Router();
 console.log('Admin routes initialized v3');
@@ -74,9 +77,15 @@ router.post('/employees/:id/adjust-attendance', async (req, res) => {
 
 router.post('/employees/:id/adjust-absent', async (req, res) => {
   try {
-    const { adjustment } = req.body;
+    const { adjustment, month } = req.body;
     const { id } = req.params;
-    console.log(`[Absent Adjustment Request] User: ${id}, Val: ${adjustment}`);
+    
+    let targetMonth = month;
+    if (!targetMonth) {
+      targetMonth = formatInTimeZone(new Date(), TIMEZONE, 'yyyy-MM');
+    }
+    
+    console.log(`[Absent Adjustment Request] User: ${id}, Val: ${adjustment}, Month: ${targetMonth}`);
     
     if (isNaN(Number(adjustment))) {
       return res.status(400).json({ error: 'Adjustment must be a number' });
@@ -85,16 +94,25 @@ router.post('/employees/:id/adjust-absent', async (req, res) => {
     const user = await prisma.user.findUnique({ where: { id } });
     if (!user) return res.status(404).json({ error: 'User not found' });
 
-    const currentVal = user.absentAdjustment || 0;
+    let adjustmentsMap: Record<string, number> = {};
+    try {
+      adjustmentsMap = JSON.parse(user.absentAdjustments);
+    } catch (e) {
+      adjustmentsMap = {};
+    }
+
+    const currentVal = adjustmentsMap[targetMonth] || 0;
     const change = Number(adjustment) || 0;
     const newVal = currentVal + change;
+    
+    adjustmentsMap[targetMonth] = newVal;
 
-    console.log(`[Absent Adjustment] User: ${user.name}, Current: ${currentVal}, Change: ${change}, New: ${newVal}`);
+    console.log(`[Absent Adjustment] User: ${user.name}, Month: ${targetMonth}, Current: ${currentVal}, Change: ${change}, New: ${newVal}`);
 
     const updated = await prisma.user.update({
       where: { id },
-      data: { absentAdjustment: newVal },
-      select: { id: true, name: true, absentAdjustment: true }
+      data: { absentAdjustments: JSON.stringify(adjustmentsMap) },
+      select: { id: true, name: true, absentAdjustments: true }
     });
     
     console.log('[Absent Adjustment Success]', updated);
@@ -102,6 +120,40 @@ router.post('/employees/:id/adjust-absent', async (req, res) => {
   } catch (error: any) {
     console.error('[Absent Adjustment Error]', error.message || error);
     res.status(500).json({ error: 'Failed to adjust absent days' });
+  }
+});
+
+// === SALARY ADJUSTMENT ===
+router.post('/employees/:id/adjust-salary', async (req, res) => {
+  try {
+    const { adjustment } = req.body;
+    const { id } = req.params;
+    console.log(`[Salary Adjustment Request] User: ${id}, Val: ${adjustment}`);
+    
+    if (isNaN(Number(adjustment))) {
+      return res.status(400).json({ error: 'Adjustment must be a number' });
+    }
+
+    const user = await prisma.user.findUnique({ where: { id } });
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    const currentVal = user.salaryAdjustment || 0;
+    const change = Number(adjustment) || 0;
+    const newVal = currentVal + change;
+
+    console.log(`[Salary Adjustment] User: ${user.name}, Current: ${currentVal}, Change: ${change}, New: ${newVal}`);
+
+    const updated = await prisma.user.update({
+      where: { id },
+      data: { salaryAdjustment: newVal },
+      select: { id: true, name: true, salaryAdjustment: true }
+    });
+    
+    console.log('[Salary Adjustment Success]', updated);
+    res.json(updated);
+  } catch (error: any) {
+    console.error('[Salary Adjustment Error]', error.message || error);
+    res.status(500).json({ error: 'Failed to adjust salary days' });
   }
 });
 
