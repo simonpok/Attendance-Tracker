@@ -87,7 +87,7 @@ export const SalaryLeaderboard: React.FC = () => {
   return (
     <div className="card" style={{ padding: '1.5rem', width: '100%' }}>
       <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem', color: '#6366f1' }}>
-        <Coins size={22} color="#fbbf24" /> Salary / Day Counting (Working Days)
+        <Coins size={22} color="#fbbf24" /> Salary/ total Present Count
       </h3>
       
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1rem' }}>

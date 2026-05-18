@@ -85,7 +85,7 @@ export const AttendanceLeaderboard: React.FC = () => {
   return (
     <div className="card" style={{ padding: '1.5rem' }}>
       <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem', color: 'var(--primary-color)' }}>
-        <Trophy size={22} color="var(--accent-color)" /> Present (Attendance Count)
+        <Trophy size={22} color="var(--accent-color)" /> Working Days
       </h3>
       
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
