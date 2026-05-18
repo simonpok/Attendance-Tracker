@@ -30,7 +30,7 @@ router.get('/', async (req, res) => {
       
       // Salary counting logic
       let salaryCount = 0;
-      let totalAbsent = user.absentAdjustment || 0;
+      let totalAbsent = targetMonth ? 0 : (user.absentAdjustment || 0);
       const now = new Date();
       const todayStr = formatInTimeZone(now, TIMEZONE, 'yyyy-MM-dd');
       
