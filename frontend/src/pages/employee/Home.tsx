@@ -72,11 +72,11 @@ export const Home: React.FC = () => {
 
       <div className="stats-grid">
         <div className="stat-card card">
-          <span className="stat-label">Attendance Count</span>
+          <span className="stat-label">Working Days</span>
           <span className="stat-value text-success">{stats.attendanceCount || 0}</span>
         </div>
         <div className="stat-card card">
-          <span className="stat-label">Working Days</span>
+          <span className="stat-label">Attendance Count</span>
           <span className="stat-value text-success">{stats.totalPresent}</span>
         </div>
         <div className="stat-card card">

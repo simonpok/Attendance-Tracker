@@ -24,10 +24,10 @@ export const Leaderboard: React.FC = () => {
       <h2 style={{ marginBottom: '1.5rem' }}>Your Stats</h2>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-        {/* 1. Attendance Count */}
+        {/* 1. Working Days */}
         <div className="card">
           <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', color: '#10b981' }}>
-            <UserCheck size={20} color="#10b981" /> Attendance Count
+            <UserCheck size={20} color="#10b981" /> Working Days
           </h3>
           {leaderboard.myStats ? (
             <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.25rem 0' }}>
@@ -39,10 +39,10 @@ export const Leaderboard: React.FC = () => {
           )}
         </div>
 
-        {/* 2. Working Days */}
+        {/* 2. Attendance Count */}
         <div className="card">
           <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', color: 'var(--primary-color)' }}>
-            <Trophy size={20} className="text-primary" /> Working Days
+            <Trophy size={20} className="text-primary" /> Attendance Count
           </h3>
           {leaderboard.myStats ? (
             <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.25rem 0' }}>
