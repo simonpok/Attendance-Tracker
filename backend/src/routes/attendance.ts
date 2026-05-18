@@ -196,8 +196,8 @@ router.get('/me', async (req: AuthRequest, res) => {
     const holidays = await prisma.holiday.findMany();
     const holidayDates = new Set(holidays.map(h => h.date));
 
-    // Get all unique dates where user was present
     const presentDates = new Set(records.filter(r => r.status === 'PRESENT').map(r => r.date));
+    let totalAbsent = absAdjustment;
     let salaryCount = 0;
     if (user) {
       const now = new Date();
@@ -217,6 +217,10 @@ router.get('/me', async (req: AuthRequest, res) => {
         } else if (isPast && (isSat || isHolid)) {
           salaryCount++;
         } 
+
+        if (isPast && !isSat && !isHolid && !isPresent) {
+          totalAbsent++;
+        }
         
         iterDate = addDays(iterDate, 1);
         safetyCounter++;
@@ -226,34 +230,10 @@ router.get('/me', async (req: AuthRequest, res) => {
 
     const attendanceCount = presentDates.size + adjustment; // Adjusted check-in days (value: 6)
     const totalPresent = salaryCount; // Salary days (value: 8)
-    let totalAbsent = absAdjustment;
     let currentStreak = 0;
 
     if (records.length > 0) {
-      // Find the first-ever record date to start counting absence
-      // Records are sorted [date desc, createdAt desc], so the last one is the earliest
-      const firstRecord = records[records.length - 1];
-      const firstDate = new Date(firstRecord.date);
-      const todayStr = getTodayDateString();
-      const todayDate = new Date(todayStr);
-
-      // 1. Calculate Absence (from firstDate to yesterday)
-      let curr = new Date(firstDate);
-      const yesterdayDate = addDays(todayDate, -1);
-      
-      while (curr <= yesterdayDate) {
-        const dStr = formatInTimeZone(curr, TIMEZONE, 'yyyy-MM-dd');
-        const zonedCurr = toZonedTime(curr, TIMEZONE);
-        const isSat = getDay(zonedCurr) === 6;
-        const isHolid = holidayDates.has(dStr);
-
-        if (!isSat && !isHolid && !presentDates.has(dStr)) {
-          totalAbsent++;
-        }
-        curr = addDays(curr, 1);
-      }
-
-      // 2. Calculate Streak (backwards from today)
+      // Calculate Streak (backwards from today)
       let now = new Date();
       // Re-calculate todayStr to ensure perfect sync with 'now'
       const todayStrStreak = formatInTimeZone(now, TIMEZONE, 'yyyy-MM-dd');
