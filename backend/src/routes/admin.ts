@@ -2,7 +2,7 @@ import { Router } from 'express';
 import bcrypt from 'bcrypt';
 import { prisma } from '../db';
 import { authenticate, requireAdmin } from '../middleware/auth';
-import { formatInTimeZone } from 'date-fns-tz';
+import { formatInTimeZone, fromZonedTime } from 'date-fns-tz';
 
 const TIMEZONE = 'Asia/Kathmandu';
 
@@ -24,10 +24,10 @@ router.post('/attendance-records-update', async (req, res) => {
 
     const updateData: any = {};
     if (checkInTime) {
-      updateData.checkInTime = new Date(`${record.date}T${checkInTime}:00`);
+      updateData.checkInTime = fromZonedTime(`${record.date}T${checkInTime}:00`, TIMEZONE);
     }
     if (checkOutTime !== undefined) {
-      updateData.checkOutTime = checkOutTime ? new Date(`${record.date}T${checkOutTime}:00`) : null;
+      updateData.checkOutTime = checkOutTime ? fromZonedTime(`${record.date}T${checkOutTime}:00`, TIMEZONE) : null;
     }
 
     const updated = await prisma.attendanceRecord.update({
@@ -305,7 +305,7 @@ router.post('/records/mark-attendance', async (req, res) => {
 
     if (type === 'PRESENT') {
       // Create a default record for 9:00 AM
-      const checkInTime = new Date(`${date}T09:00:00`);
+      const checkInTime = fromZonedTime(`${date}T09:00:00`, TIMEZONE);
       
       // Check if record already exists
       const existing = await prisma.attendanceRecord.findFirst({

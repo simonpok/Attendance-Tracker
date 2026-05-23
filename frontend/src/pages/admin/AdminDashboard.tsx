@@ -1,7 +1,7 @@
 import React from 'react';
 import { Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { LogOut, Users, FileText, Calendar, Settings as SettingsIcon, LayoutDashboard, Menu, X, Bell } from 'lucide-react';
+import { LogOut, Users, FileText, Calendar, Settings as SettingsIcon, LayoutDashboard, Menu, X } from 'lucide-react';
 import { Employees } from './Employees';
 import { Records } from './Records';
 import { Holidays } from './Holidays';
@@ -11,49 +11,21 @@ import { DashboardHome } from './DashboardHome';
 import { SalaryLeaderboard } from './SalaryLeaderboard';
 import { AbsentLeaderboard } from './AbsentLeaderboard';
 import { PresenceLeaderboard } from './PresenceLeaderboard';
-import { Notifications } from './Notifications';
+
 import { LogoutConfirmModal } from '../../components/LogoutConfirmModal';
 
 export const AdminDashboard: React.FC = () => {
   const { user, logout, token } = useAuth();
   const [showLogoutModal, setShowLogoutModal] = React.useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
-  const [pendingCount, setPendingCount] = React.useState(0);
+
   const location = useLocation();
   
   const isActive = (path: string) => location.pathname.includes(path) ? 'active' : '';
 
-  const fetchPendingCount = async () => {
-    if (!token) return;
-    try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL || ""}/api/notifications`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const data = await res.json();
-      setPendingCount(data.pending?.length || 0);
-    } catch (error) {
-      console.error('Failed to fetch pending count', error);
-    }
-  };
-
   React.useEffect(() => {
     setIsSidebarOpen(false);
   }, [location.pathname]);
-
-  React.useEffect(() => {
-    fetchPendingCount();
-    
-    const handleRefresh = () => fetchPendingCount();
-    window.addEventListener('refreshNotifications', handleRefresh);
-    
-    // Also refresh every 5 minutes
-    const interval = setInterval(fetchPendingCount, 5 * 60 * 1000);
-    
-    return () => {
-      window.removeEventListener('refreshNotifications', handleRefresh);
-      clearInterval(interval);
-    };
-  }, [token]);
 
   return (
     <div className="admin-layout">
@@ -91,26 +63,7 @@ export const AdminDashboard: React.FC = () => {
               <Calendar size={20} /> <span>Calendar</span>
             </Link>
           </li>
-          <li className={isActive('/admin/notifications')}>
-            <Link to="/admin/notifications" style={{ color: 'inherit', textDecoration: 'none', display: 'flex', gap: '0.8rem', alignItems: 'center', position: 'relative' }}>
-              <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                <Bell size={20} />
-                {pendingCount > 0 && (
-                  <span style={{ 
-                    position: 'absolute', 
-                    top: '-2px', 
-                    right: '-2px', 
-                    width: '8px', 
-                    height: '8px', 
-                    background: 'var(--danger-color)', 
-                    borderRadius: '50%',
-                    border: '2px solid var(--primary-color)'
-                  }} />
-                )}
-              </div>
-              <span>Notifications</span>
-            </Link>
-          </li>
+
           <li className={isActive('/admin/settings')}>
             <Link to="/admin/settings" style={{ color: 'inherit', textDecoration: 'none', display: 'flex', gap: '0.8rem', alignItems: 'center' }}>
               <SettingsIcon size={20} /> <span>Settings</span>
@@ -154,7 +107,7 @@ export const AdminDashboard: React.FC = () => {
           <Route path="/records" element={<Records />} />
           <Route path="/holidays" element={<Holidays />} />
           <Route path="/settings" element={<Settings />} />
-          <Route path="/notifications" element={<Notifications />} />
+
           <Route path="*" element={<Navigate to="/admin" replace />} />
         </Routes>
       </main>

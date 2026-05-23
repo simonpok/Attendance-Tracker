@@ -26,9 +26,6 @@ app.use((req, res, next) => {
   next();
 });
 
-import notificationRoutes from './routes/notifications';
-app.use('/api/notifications', notificationRoutes);
-
 app.use('/api/auth', authRoutes);
 import adminRoutes from './routes/admin';
 app.use('/api/admin', adminRoutes);

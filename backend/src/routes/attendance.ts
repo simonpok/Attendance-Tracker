@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { prisma } from '../db';
 import { authenticate, AuthRequest } from '../middleware/auth';
 import { format, startOfDay, addDays, isWeekend, getDay } from 'date-fns';
-import { toZonedTime, formatInTimeZone } from 'date-fns-tz';
+import { toZonedTime, formatInTimeZone, fromZonedTime } from 'date-fns-tz';
 
 const router = Router();
 router.use(authenticate);
@@ -150,8 +150,7 @@ router.post('/manual-check-out', async (req: AuthRequest, res) => {
     }
 
     // Parse the date and time strings into a Date object in the correct timezone
-    // Simplified logic for local demonstration
-    const checkOutTime = new Date(`${targetDateStr}T${time}:00`);
+    const checkOutTime = fromZonedTime(`${targetDateStr}T${time}:00`, TIMEZONE);
 
     const updated = await prisma.attendanceRecord.update({
       where: { id: record.id },
