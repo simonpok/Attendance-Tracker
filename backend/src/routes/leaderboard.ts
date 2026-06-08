@@ -141,7 +141,7 @@ router.get('/', async (req, res) => {
     // Sort by Highest Attendance
     const highestAttendance = [...leaderboard].sort((a, b) => b.totalPresent - a.totalPresent).slice(0, 10);
     // Sort by Highest Streak
-    const highestStreak = [...leaderboard].sort((a, b) => b.currentStreak - a.currentStreak).slice(0, 10);
+    const highestStreak = [...leaderboard].sort((a, b) => b.currentStreak - a.currentStreak);
     // Sort by Salary Count
     const highestSalary = [...leaderboard].sort((a, b) => b.salaryCount - a.salaryCount).slice(0, 10);
     // Sort by Highest Absent
