@@ -232,7 +232,7 @@ export const SalaryLeaderboard: React.FC = () => {
       )}
       
       <div style={{ marginTop: '1.5rem', padding: '0.75rem', background: '#fefce8', borderRadius: 'var(--radius-md)', fontSize: '0.75rem', color: '#b45309', textAlign: 'center', fontWeight: 500 }}>
-        Rules: Check-ins + (Saturdays & Holidays credit) + Manual Adjustments
+        Rules: Days from join date to today − Absences (first 2 absences/month covered by paid leave)
       </div>
     </div>
   );

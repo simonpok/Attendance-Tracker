@@ -5,6 +5,7 @@ import { format, addDays, isWeekend, getDay } from 'date-fns';
 import { toZonedTime, formatInTimeZone } from 'date-fns-tz';
 
 const TIMEZONE = 'Asia/Kathmandu'; // Consistent with attendance routes
+const PAID_LEAVE_DAYS = 2; // Number of paid leave days per month
 
 const router = Router();
 
@@ -107,8 +108,30 @@ router.get('/', async (req, res) => {
       
       if (targetSalaryMonth) {
         const [yyyyStr, mmStr] = targetSalaryMonth.split('-');
-        const daysInMonth = new Date(parseInt(yyyyStr), parseInt(mmStr), 0).getDate();
-        salaryCount = daysInMonth - totalAbsentForSalaryMonth;
+        
+        const year = parseInt(yyyyStr);
+        const monthIndex = parseInt(mmStr) - 1;
+        const monthStart = new Date(year, monthIndex, 1);
+        const monthEnd = new Date(year, monthIndex + 1, 0); // last day of month
+        
+        const joinZonedDate = toZonedTime(user.createdAt, TIMEZONE);
+        const joinDateOnly = new Date(joinZonedDate.getFullYear(), joinZonedDate.getMonth(), joinZonedDate.getDate());
+        
+        const nowZonedDate = toZonedTime(now, TIMEZONE);
+        const todayDateOnly = new Date(nowZonedDate.getFullYear(), nowZonedDate.getMonth(), nowZonedDate.getDate());
+        
+        const actualStart = monthStart > joinDateOnly ? monthStart : joinDateOnly;
+        const actualEnd = monthEnd < todayDateOnly ? monthEnd : todayDateOnly;
+        
+        if (actualStart <= actualEnd) {
+          const diffTime = actualEnd.getTime() - actualStart.getTime();
+          const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24)) + 1;
+          // Apply paid leave: up to PAID_LEAVE_DAYS absences are covered and don't reduce salary
+          const billableAbsences = Math.max(0, totalAbsentForSalaryMonth - PAID_LEAVE_DAYS);
+          salaryCount = diffDays - billableAbsences;
+        } else {
+          salaryCount = 0;
+        }
       } else {
         salaryCount += (user.salaryAdjustment || 0);
       }
