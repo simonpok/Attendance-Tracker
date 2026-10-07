@@ -14,10 +14,24 @@ router.get('/', async (req, res) => {
   try {
     const targetMonth = req.query.absentMonth as string; // e.g. "2026-05"
     const targetSalaryMonth = req.query.salaryMonth as string;
-    const users = await prisma.user.findMany({
+    let users = await prisma.user.findMany({
       where: { role: 'EMPLOYEE' },
       select: { id: true, name: true, attendanceAdjustment: true, absentAdjustments: true, salaryAdjustment: true, attendanceRecords: true, createdAt: true }
     });
+
+    if (targetMonth) {
+      users = users.filter(user => {
+        const userMonth = formatInTimeZone(user.createdAt, TIMEZONE, 'yyyy-MM');
+        return userMonth <= targetMonth;
+      });
+    }
+
+    if (targetSalaryMonth) {
+      users = users.filter(user => {
+        const userMonth = formatInTimeZone(user.createdAt, TIMEZONE, 'yyyy-MM');
+        return userMonth <= targetSalaryMonth;
+      });
+    }
 
     const holidays = await prisma.holiday.findMany();
     const holidayDates = new Set(holidays.map(h => h.date));
