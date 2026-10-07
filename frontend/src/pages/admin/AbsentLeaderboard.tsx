@@ -114,7 +114,7 @@ export const AbsentLeaderboard: React.FC = () => {
         </div>
       </div>
       
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '400px', overflowY: 'auto', paddingRight: '0.5rem' }}>
         {data.length === 0 ? (
           <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '1rem' }}>No records yet</p>
         ) : (

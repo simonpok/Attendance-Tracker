@@ -139,15 +139,15 @@ router.get('/', async (req, res) => {
     });
 
     // Sort by Highest Attendance
-    const highestAttendance = [...leaderboard].sort((a, b) => b.totalPresent - a.totalPresent).slice(0, 10);
+    const highestAttendance = [...leaderboard].sort((a, b) => b.totalPresent - a.totalPresent);
     // Sort by Highest Streak
     const highestStreak = [...leaderboard].sort((a, b) => b.currentStreak - a.currentStreak);
     // Sort by Salary Count
-    const highestSalary = [...leaderboard].sort((a, b) => b.salaryCount - a.salaryCount).slice(0, 10);
+    const highestSalary = [...leaderboard].sort((a, b) => b.salaryCount - a.salaryCount);
     // Sort by Highest Absent
-    const highestAbsent = [...leaderboard].sort((a, b) => b.totalAbsent - a.totalAbsent).slice(0, 10);
+    const highestAbsent = [...leaderboard].sort((a, b) => b.totalAbsent - a.totalAbsent);
     // Sort by Highest Presence Time
-    const highestPresence = [...leaderboard].sort((a, b) => b.averagePresence - a.averagePresence).slice(0, 10);
+    const highestPresence = [...leaderboard].sort((a, b) => b.averagePresence - a.averagePresence);
 
     const userId = (req as any).user.userId;
     const myStats = leaderboard.find(u => u.id === userId) || null;

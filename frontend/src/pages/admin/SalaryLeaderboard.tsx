@@ -90,7 +90,7 @@ export const SalaryLeaderboard: React.FC = () => {
         <Coins size={22} color="#fbbf24" /> Salary/ total Present Count
       </h3>
       
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1rem', maxHeight: '400px', overflowY: 'auto', paddingRight: '0.5rem' }}>
         {data.length === 0 ? (
           <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '1rem' }}>No records yet</p>
         ) : (
