@@ -95,8 +95,9 @@ router.get('/', async (req, res) => {
         const [yyyyStr, mmStr] = targetSalaryMonth.split('-');
         const daysInMonth = new Date(parseInt(yyyyStr), parseInt(mmStr), 0).getDate();
         salaryCount = daysInMonth - totalAbsentForSalaryMonth;
+      } else {
+        salaryCount += (user.salaryAdjustment || 0);
       }
-      salaryCount += (user.salaryAdjustment || 0);
 
       if (records.length > 0) {
         // Find first record date
