@@ -15,11 +15,15 @@ export const SalaryLeaderboard: React.FC = () => {
   const [adjustingUser, setAdjustingUser] = useState<LeaderboardItem | null>(null);
   const [adjustmentValue, setAdjustmentValue] = useState<string>('');
   const [isSaving, setIsSaving] = useState(false);
+  const [filterMonth, setFilterMonth] = useState<string>('');
   const { token } = useAuth();
 
   const fetchLeaderboard = async () => {
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL || ""}/api/leaderboards`, {
+      const url = filterMonth 
+        ? `${import.meta.env.VITE_API_URL || ""}/api/leaderboards?salaryMonth=${filterMonth}`
+        : `${import.meta.env.VITE_API_URL || ""}/api/leaderboards`;
+      const res = await fetch(url, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const result = await res.json();
@@ -41,11 +45,13 @@ export const SalaryLeaderboard: React.FC = () => {
 
   useEffect(() => {
     fetchLeaderboard();
+  }, [token, filterMonth]);
 
+  useEffect(() => {
     const handleRefresh = () => fetchLeaderboard();
     window.addEventListener('refreshLeaderboard', handleRefresh);
     return () => window.removeEventListener('refreshLeaderboard', handleRefresh);
-  }, [token]);
+  }, [token, filterMonth]);
 
   const handleAdjustClick = (item: LeaderboardItem) => {
     setAdjustingUser(item);
@@ -86,9 +92,29 @@ export const SalaryLeaderboard: React.FC = () => {
 
   return (
     <div className="card" style={{ padding: '1.5rem', width: '100%' }}>
-      <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem', color: '#6366f1' }}>
-        <Coins size={22} color="#fbbf24" /> Salary/ total Present Count
-      </h3>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+        <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: '#6366f1', margin: 0 }}>
+          <Coins size={22} color="#fbbf24" /> Salary/ total Present Count
+        </h3>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#f8fafc', padding: '0.25rem 0.5rem', borderRadius: '4px', border: '1px solid #e2e8f0' }}>
+          <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)' }}>Month:</span>
+          <input 
+            type="month" 
+            value={filterMonth}
+            onChange={(e) => setFilterMonth(e.target.value)}
+            style={{ border: 'none', background: 'transparent', outline: 'none', fontSize: '0.875rem', color: 'var(--text-main)', cursor: 'pointer' }}
+          />
+          {filterMonth && (
+            <button 
+              onClick={() => setFilterMonth('')}
+              style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '0.75rem', padding: '0 4px' }}
+              title="Clear filter"
+            >
+              ✕
+            </button>
+          )}
+        </div>
+      </div>
       
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1rem', maxHeight: '400px', overflowY: 'auto', paddingRight: '0.5rem' }}>
         {data.length === 0 ? (

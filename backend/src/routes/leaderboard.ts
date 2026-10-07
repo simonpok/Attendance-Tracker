@@ -13,6 +13,7 @@ router.use(authenticate);
 router.get('/', async (req, res) => {
   try {
     const targetMonth = req.query.absentMonth as string; // e.g. "2026-05"
+    const targetSalaryMonth = req.query.salaryMonth as string;
     const users = await prisma.user.findMany({
       where: { role: 'EMPLOYEE' },
       select: { id: true, name: true, attendanceAdjustment: true, absentAdjustments: true, salaryAdjustment: true, attendanceRecords: true, createdAt: true }
@@ -62,12 +63,15 @@ router.get('/', async (req, res) => {
         
         
         const isTargetMonth = targetMonth ? dStr.startsWith(targetMonth) : true;
+        const isSalaryTargetMonth = targetSalaryMonth ? dStr.startsWith(targetSalaryMonth) : true;
         
-        if (isPresent) {
-          salaryCount++;
-        } else if (isPast && (isSat || isHolid)) {
-          salaryCount++;
-        } 
+        if (isSalaryTargetMonth) {
+          if (isPresent) {
+            salaryCount++;
+          } else if (isPast && (isSat || isHolid)) {
+            salaryCount++;
+          } 
+        }
         
         if (isPast && !isSat && !isHolid && !isPresent) {
           if (isTargetMonth) {
