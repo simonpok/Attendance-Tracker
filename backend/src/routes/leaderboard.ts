@@ -45,6 +45,11 @@ router.get('/', async (req, res) => {
         totalAbsent = Object.values(adjustmentsMap).reduce((acc, val) => acc + val, 0);
       }
       
+      let totalAbsentForSalaryMonth = 0;
+      if (targetSalaryMonth) {
+        totalAbsentForSalaryMonth = adjustmentsMap[targetSalaryMonth] || 0;
+      }
+      
       const now = new Date();
       const todayStr = formatInTimeZone(now, TIMEZONE, 'yyyy-MM-dd');
       
@@ -65,7 +70,7 @@ router.get('/', async (req, res) => {
         const isTargetMonth = targetMonth ? dStr.startsWith(targetMonth) : true;
         const isSalaryTargetMonth = targetSalaryMonth ? dStr.startsWith(targetSalaryMonth) : true;
         
-        if (isSalaryTargetMonth) {
+        if (!targetSalaryMonth) {
           if (isPresent) {
             salaryCount++;
           } else if (isPast && (isSat || isHolid)) {
@@ -77,10 +82,19 @@ router.get('/', async (req, res) => {
           if (isTargetMonth) {
             totalAbsent++;
           }
+          if (targetSalaryMonth && isSalaryTargetMonth) {
+            totalAbsentForSalaryMonth++;
+          }
         }
         
         iterDate = addDays(iterDate, 1);
         safetyCounter++;
+      }
+      
+      if (targetSalaryMonth) {
+        const [yyyyStr, mmStr] = targetSalaryMonth.split('-');
+        const daysInMonth = new Date(parseInt(yyyyStr), parseInt(mmStr), 0).getDate();
+        salaryCount = daysInMonth - totalAbsentForSalaryMonth;
       }
       salaryCount += (user.salaryAdjustment || 0);
 
