@@ -33,24 +33,24 @@ const getYesterdayDateString = () => {
 
 const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
   const R = 6371e3; // metres
-  const φ1 = lat1 * Math.PI/180;
-  const φ2 = lat2 * Math.PI/180;
-  const Δφ = (lat2-lat1) * Math.PI/180;
-  const Δλ = (lon2-lon1) * Math.PI/180;
+  const φ1 = lat1 * Math.PI / 180;
+  const φ2 = lat2 * Math.PI / 180;
+  const Δφ = (lat2 - lat1) * Math.PI / 180;
+  const Δλ = (lon2 - lon1) * Math.PI / 180;
 
-  const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
-          Math.cos(φ1) * Math.cos(φ2) *
-          Math.sin(Δλ/2) * Math.sin(Δλ/2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+    Math.cos(φ1) * Math.cos(φ2) *
+    Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
-  return R * c; 
+  return R * c;
 };
 
 // Validates Location and QR Code
 const validateCheckIn = async (lat: number, lng: number, qrPayload: string) => {
   const settings = await prisma.settings.findFirst();
   if (!settings) throw new Error('Settings not found');
-  
+
   if (qrPayload !== settings.qrCodePayload) {
     throw new Error('Invalid QR Code');
   }
@@ -67,12 +67,12 @@ router.post('/check-in', async (req: AuthRequest, res) => {
     await validateCheckIn(lat, lng, qrPayload);
 
     const dateStr = getTodayDateString();
-    
+
     // Find if there's an active session
     const latestRecord = await prisma.attendanceRecord.findFirst({
-      where: { 
-        userId: req.user!.userId, 
-        date: dateStr 
+      where: {
+        userId: req.user!.userId,
+        date: dateStr
       },
       orderBy: { createdAt: 'desc' }
     });
@@ -83,9 +83,9 @@ router.post('/check-in', async (req: AuthRequest, res) => {
 
     // Count sessions for today to determine session number
     const sessionCount = await prisma.attendanceRecord.count({
-      where: { 
-        userId: req.user!.userId, 
-        date: dateStr 
+      where: {
+        userId: req.user!.userId,
+        date: dateStr
       }
     });
 
@@ -111,11 +111,11 @@ router.post('/check-out', async (req: AuthRequest, res) => {
     await validateCheckIn(lat, lng, qrPayload);
 
     const dateStr = getTodayDateString();
-    
+
     const latestRecord = await prisma.attendanceRecord.findFirst({
-      where: { 
-        userId: req.user!.userId, 
-        date: dateStr 
+      where: {
+        userId: req.user!.userId,
+        date: dateStr
       },
       orderBy: { createdAt: 'desc' }
     });
@@ -154,9 +154,9 @@ router.post('/manual-check-out', async (req: AuthRequest, res) => {
 
     const updated = await prisma.attendanceRecord.update({
       where: { id: record.id },
-      data: { 
-        checkOutTime, 
-        isManualCheckout: true 
+      data: {
+        checkOutTime,
+        isManualCheckout: true
       }
     });
 
@@ -182,7 +182,7 @@ router.get('/me', async (req: AuthRequest, res) => {
     });
 
     const adjustment = user?.attendanceAdjustment || 0;
-    
+
     let adjustmentsMap: Record<string, number> = {};
     try {
       adjustmentsMap = JSON.parse((user as any)?.absentAdjustments || "{}");
@@ -210,17 +210,17 @@ router.get('/me', async (req: AuthRequest, res) => {
         const isPast = dStr < todayStr;
         const isSat = getDay(iterDate) === 6;
         const isHolid = holidayDates.has(dStr);
-        
+
         if (isPresent) {
           salaryCount++;
         } else if (isPast && (isSat || isHolid)) {
           salaryCount++;
-        } 
+        }
 
         if (isPast && !isSat && !isHolid && !isPresent) {
           totalAbsent++;
         }
-        
+
         iterDate = addDays(iterDate, 1);
         safetyCounter++;
       }
@@ -238,7 +238,7 @@ router.get('/me', async (req: AuthRequest, res) => {
       let now = new Date();
       // Re-calculate todayStr to ensure perfect sync with 'now'
       const todayStrStreak = formatInTimeZone(now, TIMEZONE, 'yyyy-MM-dd');
-      
+
       let checkDate = now;
       for (let i = 0; i < 365; i++) {
         const dStr = formatInTimeZone(checkDate, TIMEZONE, 'yyyy-MM-dd');
@@ -265,7 +265,7 @@ router.get('/me', async (req: AuthRequest, res) => {
     const todayRecord = records.find(r => r.date === todayStr); // records is sorted by date desc, but within same date it's by id/created desc? 
     // Wait, the query was orderBy: { date: 'desc' }. I should add createdAt desc.
 
-    
+
     console.log('Attendance debug:', {
       todayStr,
       foundRecord: !!todayRecord,

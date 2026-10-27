@@ -84,7 +84,7 @@ export const Records: React.FC = () => {
               onClick={() => handleDownload('pdf')}
               className="icon-btn"
               title="Download PDF"
-              style={{ background: 'white', border: '1px solid #e2e8f0', padding: '0.5rem', borderRadius: 'var(--radius-md)', color: '#ef4444', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+              style={{ background: 'var(--card-bg)', border: '1px solid var(--border-color)', padding: '0.5rem', borderRadius: 'var(--radius-md)', color: '#ef4444', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
             >
               <FileText size={18} /> <span style={{ fontSize: '0.75rem', fontWeight: 600 }}>PDF</span>
             </button>
@@ -92,14 +92,14 @@ export const Records: React.FC = () => {
               onClick={() => handleDownload('excel')}
               className="icon-btn"
               title="Download Excel"
-              style={{ background: 'white', border: '1px solid #e2e8f0', padding: '0.5rem', borderRadius: 'var(--radius-md)', color: '#10b981', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+              style={{ background: 'var(--card-bg)', border: '1px solid var(--border-color)', padding: '0.5rem', borderRadius: 'var(--radius-md)', color: '#10b981', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
             >
               <FileSpreadsheet size={18} /> <span style={{ fontSize: '0.75rem', fontWeight: 600 }}>EXCEL</span>
             </button>
           </div>
 
           {/* Date Filter */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', background: 'white', padding: '0.5rem 1rem', borderRadius: 'var(--radius-md)', border: '1px solid #e2e8f0' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', background: 'var(--card-bg)', padding: '0.5rem 1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
             <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-muted)' }}>Filter Date:</span>
             <input 
               type="date" 
@@ -150,14 +150,14 @@ export const Records: React.FC = () => {
               <div className="card table-container" style={{ borderRadius: '0 0 var(--radius-md) var(--radius-md)', padding: 0 }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '600px' }}>
                   <thead>
-                    <tr style={{ borderBottom: '1px solid #e2e8f0', background: '#f8fafc' }}>
+                    <tr style={{ borderBottom: '1px solid var(--border-color)', background: 'var(--table-header-bg)' }}>
                       <th style={{ padding: '1rem 1.5rem', textAlign: 'left', width: '30%' }}>Employee</th>
                       <th style={{ padding: '1rem 1.5rem', textAlign: 'left' }}>Sessions (Check In - Check Out)</th>
                     </tr>
                   </thead>
                   <tbody>
                     {Object.values(grouped[date]).map((group: any) => (
-                      <tr key={group.user.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                      <tr key={group.user.id} style={{ borderBottom: '1px solid var(--border-light)' }}>
                         <td style={{ padding: '1.25rem 1.5rem', verticalAlign: 'top' }}>
                           <div style={{ fontWeight: 600, color: 'var(--text-main)' }}>{group.user.name}</div>
                           <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{group.user.employeeId}</div>
@@ -169,10 +169,10 @@ export const Records: React.FC = () => {
                                 display: 'flex', 
                                 alignItems: 'center', 
                                 gap: '1rem',
-                                background: '#f8fafc',
+                                background: 'var(--session-box-bg)',
                                 padding: '0.5rem 1rem',
                                 borderRadius: 'var(--radius-md)',
-                                border: '1px solid #e2e8f0',
+                                border: '1px solid var(--border-color)',
                                 width: 'fit-content'
                               }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -181,7 +181,7 @@ export const Records: React.FC = () => {
                                     {sess.checkInTime ? format(new Date(sess.checkInTime), 'hh:mm a') : '-'}
                                   </span>
                                 </div>
-                                <div style={{ width: '1px', height: '12px', background: '#cbd5e1' }}></div>
+                                <div style={{ width: '1px', height: '12px', background: 'var(--session-divider)' }}></div>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                   <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 500 }}>OUT:</span>
                                   <span style={{ fontWeight: 600, color: 'var(--accent-color)' }}>
@@ -191,11 +191,11 @@ export const Records: React.FC = () => {
                                 {sess.isManualCheckout && (
                                   <span style={{ 
                                     fontSize: '0.65rem', 
-                                    background: '#fff7ed', 
-                                    color: '#c2410c', 
+                                    background: 'var(--manual-badge-bg)', 
+                                    color: 'var(--manual-badge-text)', 
                                     padding: '0.125rem 0.375rem', 
                                     borderRadius: '4px',
-                                    border: '1px solid #ffedd5',
+                                    border: '1px solid var(--manual-badge-border)',
                                     fontWeight: 600
                                   }}>MANUAL</span>
                                 )}

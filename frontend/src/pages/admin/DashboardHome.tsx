@@ -164,7 +164,7 @@ export const DashboardHome: React.FC = () => {
     <div className="dashboard-home">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
         <h2 style={{ fontSize: '1.5rem' }}>Daily Attendance Summary</h2>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', background: 'white', padding: '0.5rem 1rem', borderRadius: 'var(--radius-md)', border: '1px solid #e2e8f0' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', background: 'var(--card-bg)', padding: '0.5rem 1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
           <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-muted)' }}>Filter Date:</span>
           <input 
             type="date" 
@@ -207,7 +207,7 @@ export const DashboardHome: React.FC = () => {
                 </div>
               </div>
               
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1px', background: '#e2e8f0', border: '1px solid #e2e8f0', borderRadius: '0 0 var(--radius-md) var(--radius-md)', overflow: 'hidden' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1px', background: 'var(--border-color)', border: '1px solid var(--border-color)', borderRadius: '0 0 var(--radius-md) var(--radius-md)', overflow: 'hidden' }}>
                 {/* Left Column: Checked In */}
                 <div 
                   onDragOver={(e) => {
@@ -216,7 +216,7 @@ export const DashboardHome: React.FC = () => {
                   }}
                   onDrop={(e) => handleDrop(e, 'PRESENT', date)}
                   style={{ 
-                    background: 'white', 
+                    background: 'var(--card-bg)', 
                     padding: '1.5rem', 
                     minHeight: '300px',
                     transition: 'all 0.2s ease',
@@ -237,9 +237,9 @@ export const DashboardHome: React.FC = () => {
                         onDragEnd={handleDragEnd}
                         style={{ 
                           padding: '1rem', 
-                          border: '1px solid #f1f5f9', 
+                          border: '1px solid var(--border-light)', 
                           borderRadius: 'var(--radius-md)', 
-                          background: '#fcfcfc',
+                          background: 'var(--drag-card-bg)',
                           cursor: 'grab',
                           userSelect: 'none'
                         }}
@@ -253,9 +253,9 @@ export const DashboardHome: React.FC = () => {
                               title="Click to edit times"
                               style={{ 
                                 fontSize: '0.7rem', 
-                                background: '#f0fdf4', 
-                                border: '1px solid #dcfce7',
-                                color: '#166534',
+                                background: 'var(--session-chip-bg)', 
+                                border: '1px solid var(--session-chip-border)',
+                                color: 'var(--session-chip-text)',
                                 padding: '0.25rem 0.5rem',
                                 borderRadius: '4px',
                                 fontWeight: 500,
@@ -287,7 +287,7 @@ export const DashboardHome: React.FC = () => {
                   }}
                   onDrop={(e) => handleDrop(e, 'ABSENT', date)}
                   style={{ 
-                    background: '#f8fafc', 
+                    background: 'var(--absent-panel-bg)', 
                     padding: '1.5rem', 
                     minHeight: '300px',
                     transition: 'all 0.2s ease',
@@ -308,9 +308,9 @@ export const DashboardHome: React.FC = () => {
                         onDragEnd={handleDragEnd}
                         style={{ 
                           padding: '0.75rem 1rem', 
-                          border: '1px solid #e2e8f0', 
+                          border: '1px solid var(--border-color)', 
                           borderRadius: 'var(--radius-md)', 
-                          background: 'white',
+                          background: 'var(--card-bg)',
                           display: 'flex',
                           justifyContent: 'space-between',
                           alignItems: 'center',
@@ -354,12 +354,13 @@ export const DashboardHome: React.FC = () => {
           padding: '1rem'
         }}>
           <div style={{
-            background: 'white',
+            background: 'var(--modal-bg)',
             padding: '2rem',
             borderRadius: 'var(--radius-lg)',
             width: '100%',
             maxWidth: '400px',
-            boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)'
+            boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)',
+            border: '1px solid var(--border-color)'
           }}>
             <h3 style={{ marginBottom: '1.5rem' }}>Edit Attendance</h3>
             <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>

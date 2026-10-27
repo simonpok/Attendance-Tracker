@@ -1,7 +1,8 @@
 import React from 'react';
 import { Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { LogOut, Users, FileText, Calendar, Settings as SettingsIcon, LayoutDashboard, Menu, X } from 'lucide-react';
+import { useTheme } from '../../context/ThemeContext';
+import { LogOut, Users, FileText, Calendar, Settings as SettingsIcon, LayoutDashboard, Menu, X, Sun, Moon } from 'lucide-react';
 import { Employees } from './Employees';
 import { Records } from './Records';
 import { Holidays } from './Holidays';
@@ -16,7 +17,14 @@ import { StreakLeaderboard } from './StreakLeaderboard';
 import { LogoutConfirmModal } from '../../components/LogoutConfirmModal';
 
 export const AdminDashboard: React.FC = () => {
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good Morning 🌅';
+    if (hour < 17) return 'Good Afternoon 🌞';
+    return 'Good Evening 🌙';
+  };
   const { user, logout, token } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const [showLogoutModal, setShowLogoutModal] = React.useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
 
@@ -38,7 +46,10 @@ export const AdminDashboard: React.FC = () => {
 
       <nav className={`admin-sidebar ${isSidebarOpen ? 'open' : ''}`}>
         <div className="sidebar-header">
-          <h2 style={{ whiteSpace: 'nowrap', fontSize: '1.25rem' }}>Core Walkers Admin</h2>
+          <h2 style={{ whiteSpace: 'nowrap', fontSize: '1.1rem', flex: 1 }}>Core Walkers Admin</h2>
+          <button className="theme-toggle" onClick={toggleTheme} title={theme === 'dark' ? 'Switch to Light' : 'Switch to Dark'} style={{ marginRight: '0.5rem' }}>
+            {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+          </button>
           <button className="mobile-close-btn" onClick={() => setIsSidebarOpen(false)}>
             <X size={20} />
           </button>
@@ -85,7 +96,7 @@ export const AdminDashboard: React.FC = () => {
       />
       <main className="admin-content">
         <header className="content-header" style={{ marginBottom: '1.5rem' }}>
-          <h1 style={{ fontSize: 'clamp(1.25rem, 5vw, 2.25rem)' }}>Welcome, {user?.name}</h1>
+          <h1 style={{ fontSize: 'clamp(1.25rem, 5vw, 2.25rem)' }}>{`${getGreeting()}, ${user?.name}`}</h1>
         </header>
         
         <Routes>

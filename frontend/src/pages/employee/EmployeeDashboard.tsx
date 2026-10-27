@@ -1,7 +1,8 @@
 import React from 'react';
 import { Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { LogOut, Home as HomeIcon, QrCode, Trophy, User } from 'lucide-react';
+import { useTheme } from '../../context/ThemeContext';
+import { LogOut, Home as HomeIcon, QrCode, Trophy, User, Sun, Moon } from 'lucide-react';
 import { Home } from './Home';
 import { CheckIn } from './CheckIn';
 import { Leaderboard } from './Leaderboard';
@@ -10,7 +11,14 @@ import { Calendar } from 'lucide-react';
 import { LogoutConfirmModal } from '../../components/LogoutConfirmModal';
 
 export const EmployeeDashboard: React.FC = () => {
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good Morning 🌅';
+    if (hour < 17) return 'Good Afternoon 🌞';
+    return 'Good Evening 🌙';
+  };
   const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const [showLogoutModal, setShowLogoutModal] = React.useState(false);
   const location = useLocation();
   
@@ -22,11 +30,16 @@ export const EmployeeDashboard: React.FC = () => {
         <header className="mobile-header">
           <div className="header-user">
             <User size={24} />
-            <span>Hi, {user?.name?.split(' ')[0]}</span>
+            <span>{`${getGreeting()}, ${user?.name?.split(' ')[0]}`}</span>
           </div>
-          <button className="icon-btn" onClick={() => setShowLogoutModal(true)}>
-            <LogOut size={20} />
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <button className="theme-toggle-light" onClick={toggleTheme} title={theme === 'dark' ? 'Switch to Light' : 'Switch to Dark'}>
+              {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+            </button>
+            <button className="icon-btn" onClick={() => setShowLogoutModal(true)}>
+              <LogOut size={20} />
+            </button>
+          </div>
         </header>
 
         <LogoutConfirmModal 
