@@ -72,6 +72,7 @@ model Settings {
   smtpPort        Int?     @default(465)
   smtpUser        String?  @default("info@corewalkers.com")
   smtpPass        String?
+  resendApiKey    String?
   reportRecipient String?  @default("info@corewalkers.com")
   reportBcc       String?
   updatedAt       DateTime @updatedAt

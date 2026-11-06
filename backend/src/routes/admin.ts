@@ -280,6 +280,7 @@ router.put('/settings', async (req, res) => {
       smtpPort,
       smtpUser,
       smtpPass,
+      resendApiKey,
       reportRecipient,
       reportBcc
     } = req.body;
@@ -305,6 +306,7 @@ router.put('/settings', async (req, res) => {
     if (smtpPort !== undefined) updateData.smtpPort = Number(smtpPort) || 465;
     if (smtpUser !== undefined) updateData.smtpUser = smtpUser;
     if (smtpPass !== undefined) updateData.smtpPass = smtpPass;
+    if (resendApiKey !== undefined) updateData.resendApiKey = resendApiKey;
     if (reportRecipient !== undefined) updateData.reportRecipient = reportRecipient;
     if (reportBcc !== undefined) updateData.reportBcc = reportBcc;
 

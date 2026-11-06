@@ -1,6 +1,5 @@
 import { prisma } from '../db';
 import * as XLSX from 'xlsx';
-import nodemailer, { SendMailOptions, Transporter } from 'nodemailer';
 import { format, subMonths, getDay, addDays } from 'date-fns';
 import { formatInTimeZone, toZonedTime } from 'date-fns-tz';
 
@@ -19,13 +18,9 @@ export function formatDuration(ms: number): string {
 // Retrieve email and reporting configuration from database or env fallbacks
 export async function getEmailSettings() {
   const dbSettings = await prisma.settings.findFirst();
-  const port = dbSettings?.smtpPort || parseInt(process.env.SMTP_PORT || '587', 10);
   return {
-    smtpHost: dbSettings?.smtpHost || process.env.SMTP_HOST || 'smtp.titan.email',
-    smtpPort: port,
-    smtpSecure: port === 465, // ONLY port 465 uses SSL direct; port 587 uses STARTTLS
     smtpUser: dbSettings?.smtpUser || process.env.SMTP_USER || 'info@corewalkers.com',
-    smtpPass: dbSettings?.smtpPass || process.env.SMTP_PASS || '',
+    resendApiKey: dbSettings?.resendApiKey || process.env.RESEND_API_KEY || '',
     reportRecipient: dbSettings?.reportRecipient || process.env.REPORT_RECIPIENT_EMAIL || 'info@corewalkers.com',
     reportBcc: dbSettings?.reportBcc || process.env.REPORT_BCC_EMAILS || '',
   };
@@ -247,44 +242,27 @@ export async function generateMonthlyExcelWorkbook(targetMonth: string): Promise
   return buffer;
 }
 
-// Helper to create transport with specific port
-function createTransportForPort(config: any, port: number) {
-  const isSecure = port === 465;
-  return nodemailer.createTransport({
-    host: config.smtpHost,
-    port: port,
-    secure: isSecure,
-    auth: {
-      user: config.smtpUser,
-      pass: config.smtpPass,
-    },
-    connectionTimeout: 12000, // 12 seconds timeout
-    greetingTimeout: 12000,
-    socketTimeout: 20000,
-    tls: {
-      rejectUnauthorized: false,
-    },
-  });
-}
-
-// Send Monthly Report by Email with auto-fallback between port 587 and port 465
+// Send Monthly Report via Resend HTTP API (bypasses SMTP port blocks on Railway)
 export async function sendMonthlyReportEmail(targetMonth?: string, customRecipient?: string, customBcc?: string | string[]) {
   const config = await getEmailSettings();
 
   const monthToSend = targetMonth || formatInTimeZone(subMonths(new Date(), 1), TIMEZONE, 'yyyy-MM');
   const recipient = customRecipient || config.reportRecipient || config.smtpUser;
 
-  if (!config.smtpUser || !config.smtpPass) {
-    throw new Error('Sender email password is not configured yet. Please enter and save your password in Admin Settings.');
+  if (!config.resendApiKey) {
+    throw new Error('Resend API key is not configured. Please enter your Resend API key in Admin Settings.');
   }
 
   if (!recipient) {
     throw new Error('No recipient email specified. Please set a recipient in Admin Settings.');
   }
 
-  let bccList: string | string[] | undefined = customBcc || config.reportBcc;
-  if (typeof bccList === 'string' && bccList.trim()) {
-    bccList = bccList.split(/[,;]/).map(e => e.trim()).filter(Boolean);
+  let bccArray: string[] = [];
+  const rawBcc = customBcc || config.reportBcc;
+  if (typeof rawBcc === 'string' && rawBcc.trim()) {
+    bccArray = rawBcc.split(/[,;]/).map(e => e.trim()).filter(Boolean);
+  } else if (Array.isArray(rawBcc)) {
+    bccArray = rawBcc.filter(Boolean);
   }
 
   console.log(`[Monthly Report] Generating Excel workbook for month: ${monthToSend}...`);
@@ -292,13 +270,14 @@ export async function sendMonthlyReportEmail(targetMonth?: string, customRecipie
 
   const filename = `Attendance_Report_${monthToSend}.xlsx`;
 
-  const mailOptions: SendMailOptions = {
-    from: `"Core Walkers Office Tracker" <${config.smtpUser}>`,
-    to: recipient,
+  // Build Resend API payload
+  const emailPayload: any = {
+    from: `Core Walkers Office Tracker <${config.smtpUser}>`,
+    to: [recipient],
     subject: `Monthly Attendance & Overall Presence Report - ${monthToSend}`,
     html: `
       <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-        <h2 style="color: #0f172a;">Core Walkers Monthly Attendance & Overall Report</h2>
+        <h2 style="color: #0f172a;">Core Walkers Monthly Attendance &amp; Overall Report</h2>
         <p>Hello,</p>
         <p>Please find attached the official attendance report for <strong>${monthToSend}</strong> with complete overall historical tracking.</p>
         <div style="background-color: #f8fafc; border-left: 4px solid #10b981; padding: 12px; margin: 16px 0;">
@@ -314,38 +293,39 @@ export async function sendMonthlyReportEmail(targetMonth?: string, customRecipie
     attachments: [
       {
         filename,
-        content: excelBuffer,
-        contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        content: excelBuffer.toString('base64'),
       },
     ],
   };
 
-  if (bccList && (Array.isArray(bccList) ? bccList.length > 0 : true)) {
-    mailOptions.bcc = bccList;
+  if (bccArray.length > 0) {
+    emailPayload.bcc = bccArray;
   }
 
-  // Primary port to try (from config or default 587)
-  const primaryPort = Number(config.smtpPort) || 587;
-  // Alternative fallback port if primary times out or fails connection
-  const fallbackPort = primaryPort === 465 ? 587 : 465;
+  console.log(`[Monthly Report] Sending via Resend API from ${config.smtpUser} to ${recipient}...`);
 
-  console.log(`[Monthly Report] Attempting to send email via ${config.smtpHost}:${primaryPort} (secure: ${primaryPort === 465})...`);
+  const response = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${config.resendApiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(emailPayload),
+  });
 
-  try {
-    const transporter = createTransportForPort(config, primaryPort);
-    const info = await transporter.sendMail(mailOptions);
-    console.log(`[Monthly Report] Successfully sent via port ${primaryPort}: ${info.messageId}`);
-    return { success: true, messageId: info.messageId, recipient, bcc: bccList, month: monthToSend, portUsed: primaryPort };
-  } catch (primaryErr: any) {
-    console.warn(`[Monthly Report] Sending via port ${primaryPort} failed (${primaryErr.message}). Retrying via fallback port ${fallbackPort}...`);
-    try {
-      const fallbackTransporter = createTransportForPort(config, fallbackPort);
-      const fallbackInfo = await fallbackTransporter.sendMail(mailOptions);
-      console.log(`[Monthly Report] Successfully sent via fallback port ${fallbackPort}: ${fallbackInfo.messageId}`);
-      return { success: true, messageId: fallbackInfo.messageId, recipient, bcc: bccList, month: monthToSend, portUsed: fallbackPort };
-    } catch (fallbackErr: any) {
-      console.error(`[Monthly Report] Both ports ${primaryPort} and ${fallbackPort} failed:`, fallbackErr);
-      throw new Error(`Failed to send email on ports ${primaryPort} & ${fallbackPort}. Reason: ${fallbackErr.message || primaryErr.message}`);
-    }
+  const result = await response.json() as any;
+
+  if (!response.ok) {
+    console.error('[Monthly Report] Resend API error:', result);
+    throw new Error(result?.message || result?.name || 'Failed to send email via Resend API');
   }
+
+  console.log(`[Monthly Report] Successfully sent via Resend. ID: ${result.id}`);
+  return {
+    success: true,
+    messageId: result.id,
+    recipient,
+    bcc: bccArray.length > 0 ? bccArray : undefined,
+    month: monthToSend,
+  };
 }

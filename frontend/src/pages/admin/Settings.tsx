@@ -28,10 +28,8 @@ export const Settings: React.FC = () => {
 
   // Email Configuration Settings (stored in database)
   const [emailConfig, setEmailConfig] = useState({
-    smtpHost: 'smtp.titan.email',
-    smtpPort: 465,
     smtpUser: 'info@corewalkers.com',
-    smtpPass: '',
+    resendApiKey: '',
     reportRecipient: 'info@corewalkers.com',
     reportBcc: ''
   });
@@ -67,10 +65,8 @@ export const Settings: React.FC = () => {
         });
 
         setEmailConfig({
-          smtpHost: data.smtpHost || 'smtp.titan.email',
-          smtpPort: data.smtpPort || 465,
           smtpUser: data.smtpUser || 'info@corewalkers.com',
-          smtpPass: data.smtpPass || '',
+          resendApiKey: data.resendApiKey || '',
           reportRecipient: data.reportRecipient || 'info@corewalkers.com',
           reportBcc: data.reportBcc || ''
         });
@@ -287,13 +283,13 @@ export const Settings: React.FC = () => {
             </div>
 
             <div className="input-group">
-              <label style={{ fontWeight: 600 }}>Sender Password</label>
+              <label style={{ fontWeight: 600 }}>Resend API Key</label>
               <div style={{ position: 'relative' }}>
                 <input 
                   type={showPassword ? 'text' : 'password'} 
-                  value={emailConfig.smtpPass} 
-                  onChange={e => setEmailConfig({ ...emailConfig, smtpPass: e.target.value })}
-                  placeholder="Enter email account password"
+                  value={emailConfig.resendApiKey} 
+                  onChange={e => setEmailConfig({ ...emailConfig, resendApiKey: e.target.value })}
+                  placeholder="re_xxxxxxxxxxxxxxxxxxxxxxxx"
                   style={{ width: '100%', paddingRight: '2.5rem' }}
                 />
                 <button
@@ -311,11 +307,14 @@ export const Settings: React.FC = () => {
                     display: 'flex',
                     alignItems: 'center'
                   }}
-                  title={showPassword ? 'Hide password' : 'Show password'}
+                  title={showPassword ? 'Hide API key' : 'Show API key'}
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
+              <p style={{ margin: '0.35rem 0 0', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                Get a free API key at <a href="https://resend.com" target="_blank" rel="noreferrer" style={{ color: 'var(--primary-color)' }}>resend.com</a>. Must verify <strong>corewalkers.com</strong> domain first.
+              </p>
             </div>
 
             <div className="input-group">
@@ -337,28 +336,6 @@ export const Settings: React.FC = () => {
                 value={emailConfig.reportBcc} 
                 onChange={e => setEmailConfig({ ...emailConfig, reportBcc: e.target.value })}
                 placeholder="e.g. roshan@corewalkers.com, admin@corewalkers.com"
-                style={{ width: '100%' }}
-              />
-            </div>
-
-            <div className="input-group">
-              <label style={{ fontWeight: 600 }}>SMTP Server Host</label>
-              <input 
-                type="text" 
-                value={emailConfig.smtpHost} 
-                onChange={e => setEmailConfig({ ...emailConfig, smtpHost: e.target.value })}
-                placeholder="smtp.titan.email"
-                style={{ width: '100%' }}
-              />
-            </div>
-
-            <div className="input-group">
-              <label style={{ fontWeight: 600 }}>SMTP Port</label>
-              <input 
-                type="number" 
-                value={emailConfig.smtpPort} 
-                onChange={e => setEmailConfig({ ...emailConfig, smtpPort: parseInt(e.target.value, 10) || 465 })}
-                placeholder="465"
                 style={{ width: '100%' }}
               />
             </div>
