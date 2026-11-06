@@ -3,6 +3,7 @@ import bcrypt from 'bcrypt';
 import { prisma } from '../db';
 import { authenticate, requireAdmin } from '../middleware/auth';
 import { formatInTimeZone, fromZonedTime } from 'date-fns-tz';
+import { sendMonthlyReportEmail, generateMonthlyExcelWorkbook, generateMonthlyData } from '../services/monthlyReport';
 
 const TIMEZONE = 'Asia/Kathmandu';
 
@@ -370,6 +371,42 @@ router.post('/records/mark-attendance', async (req, res) => {
   } catch (error) {
     console.error('Manual attendance error:', error);
     res.status(500).json({ error: 'Failed to mark attendance' });
+  }
+});
+
+// === MONTHLY ATTENDANCE EMAIL REPORTS ===
+router.post('/reports/send-monthly-email', async (req, res) => {
+  try {
+    const { month, recipient } = req.body;
+    const result = await sendMonthlyReportEmail(month, recipient);
+    res.json(result);
+  } catch (error: any) {
+    console.error('Send monthly report error:', error);
+    res.status(500).json({ error: error.message || 'Failed to send monthly report email' });
+  }
+});
+
+router.get('/reports/download-monthly-excel', async (req, res) => {
+  try {
+    const month = (req.query.month as string) || formatInTimeZone(new Date(), TIMEZONE, 'yyyy-MM');
+    const buffer = await generateMonthlyExcelWorkbook(month);
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="Attendance_Report_${month}.xlsx"`);
+    res.send(buffer);
+  } catch (error: any) {
+    console.error('Download report error:', error);
+    res.status(500).json({ error: error.message || 'Failed to generate Excel report' });
+  }
+});
+
+router.get('/reports/preview-monthly', async (req, res) => {
+  try {
+    const month = (req.query.month as string) || formatInTimeZone(new Date(), TIMEZONE, 'yyyy-MM');
+    const data = await generateMonthlyData(month);
+    res.json({ month, ...data });
+  } catch (error: any) {
+    console.error('Preview report error:', error);
+    res.status(500).json({ error: error.message || 'Failed to preview monthly report' });
   }
 });
 

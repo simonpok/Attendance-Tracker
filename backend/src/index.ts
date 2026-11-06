@@ -54,6 +54,8 @@ app.post('/api/direct-delete-salary/:id', authenticate, requireAdmin, async (req
 const frontendPath = path.join(__dirname, '../../frontend/dist');
 console.log(`[Diagnostic] Frontend path: ${frontendPath}`);
 import fs from 'fs';
+import cron from 'node-cron';
+import { sendMonthlyReportEmail } from './services/monthlyReport';
 if (fs.existsSync(frontendPath)) {
   console.log(`[Diagnostic] Frontend directory exists.`);
   if (fs.existsSync(path.join(frontendPath, 'index.html'))) {
@@ -87,4 +89,20 @@ app.listen(Number(PORT), '0.0.0.0', async () => {
   } catch (err) {
     console.error('Database connection failed:', err);
   }
+
+  // Automated Monthly Attendance Email Report
+  // Runs at 12:00 AM (midnight) on the 1st of every month in Asia/Kathmandu
+  // Processes and emails the complete attendance & presence records for the month that just ended.
+  cron.schedule('0 0 1 * *', async () => {
+    console.log('[Cron] Running scheduled end-of-month attendance report email...');
+    try {
+      await sendMonthlyReportEmail();
+      console.log('[Cron] Monthly attendance report sent successfully.');
+    } catch (error: any) {
+      console.error('[Cron] Failed to send monthly attendance report:', error.message || error);
+    }
+  }, {
+    timezone: 'Asia/Kathmandu'
+  });
+  console.log('[Cron] Monthly attendance report cron scheduled (12:00 AM on 1st of every month, Asia/Kathmandu).');
 });
