@@ -271,16 +271,50 @@ router.get('/settings', async (req, res) => {
 
 router.put('/settings', async (req, res) => {
   try {
-    const { officeLat, officeLng, allowedRadius, qrCodePayload } = req.body;
-    const settings = await prisma.settings.findFirst();
-    if (!settings) return res.status(404).json({ error: 'Settings not found' });
+    const { 
+      officeLat, 
+      officeLng, 
+      allowedRadius, 
+      qrCodePayload,
+      smtpHost,
+      smtpPort,
+      smtpUser,
+      smtpPass,
+      reportRecipient,
+      reportBcc
+    } = req.body;
+
+    let settings = await prisma.settings.findFirst();
+    if (!settings) {
+      settings = await prisma.settings.create({
+        data: {
+          officeLat: officeLat ?? 27.7172,
+          officeLng: officeLng ?? 85.3240,
+          allowedRadius: allowedRadius ?? 100,
+          qrCodePayload: qrCodePayload ?? 'officetrack-auth-123',
+        }
+      });
+    }
     
+    const updateData: any = {};
+    if (officeLat !== undefined) updateData.officeLat = officeLat;
+    if (officeLng !== undefined) updateData.officeLng = officeLng;
+    if (allowedRadius !== undefined) updateData.allowedRadius = allowedRadius;
+    if (qrCodePayload !== undefined) updateData.qrCodePayload = qrCodePayload;
+    if (smtpHost !== undefined) updateData.smtpHost = smtpHost;
+    if (smtpPort !== undefined) updateData.smtpPort = Number(smtpPort) || 465;
+    if (smtpUser !== undefined) updateData.smtpUser = smtpUser;
+    if (smtpPass !== undefined) updateData.smtpPass = smtpPass;
+    if (reportRecipient !== undefined) updateData.reportRecipient = reportRecipient;
+    if (reportBcc !== undefined) updateData.reportBcc = reportBcc;
+
     const updated = await prisma.settings.update({
       where: { id: settings.id },
-      data: { officeLat, officeLng, allowedRadius, qrCodePayload }
+      data: updateData
     });
     res.json(updated);
   } catch (error) {
+    console.error('Failed to update settings:', error);
     res.status(500).json({ error: 'Failed to update settings' });
   }
 });

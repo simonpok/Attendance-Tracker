@@ -63,10 +63,16 @@ model Holiday {
 }
 
 model Settings {
-  id            String   @id @default(uuid())
-  officeLat     Float    @default(27.7172) // Kathmandu roughly
-  officeLng     Float    @default(85.3240)
-  allowedRadius Int      @default(100) // meters
-  qrCodePayload String   @default("officetrack-auth-123")
-  updatedAt     DateTime @updatedAt
+  id              String   @id @default(uuid())
+  officeLat       Float    @default(27.7172) // Kathmandu roughly
+  officeLng       Float    @default(85.3240)
+  allowedRadius   Int      @default(100) // meters
+  qrCodePayload   String   @default("officetrack-auth-123")
+  smtpHost        String?  @default("smtp.titan.email")
+  smtpPort        Int?     @default(465)
+  smtpUser        String?  @default("info@corewalkers.com")
+  smtpPass        String?
+  reportRecipient String?  @default("info@corewalkers.com")
+  reportBcc       String?
+  updatedAt       DateTime @updatedAt
 }
