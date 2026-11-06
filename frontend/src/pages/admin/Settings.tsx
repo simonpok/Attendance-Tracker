@@ -20,6 +20,7 @@ export const Settings: React.FC = () => {
   };
   const [reportMonth, setReportMonth] = useState(getCurrentMonthStr());
   const [recipientEmail, setRecipientEmail] = useState('info@corewalkers.com');
+  const [bccEmails, setBccEmails] = useState('');
   const [sendingEmail, setSendingEmail] = useState(false);
   const [emailStatus, setEmailStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [downloading, setDownloading] = useState(false);
@@ -61,7 +62,8 @@ export const Settings: React.FC = () => {
         },
         body: JSON.stringify({
           month: reportMonth,
-          recipient: recipientEmail
+          recipient: recipientEmail,
+          bcc: bccEmails
         })
       });
 
@@ -69,7 +71,7 @@ export const Settings: React.FC = () => {
       if (res.ok) {
         setEmailStatus({
           type: 'success',
-          message: `Monthly report email sent successfully to ${recipientEmail}!`
+          message: `Monthly report email sent successfully to ${recipientEmail}${bccEmails ? ` (BCC: ${bccEmails})` : ''}!`
         });
       } else {
         setEmailStatus({
@@ -164,7 +166,7 @@ export const Settings: React.FC = () => {
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem', marginBottom: '1.25rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem', marginBottom: '1.25rem' }}>
           <div className="input-group">
             <label>Select Month</label>
             <input 
@@ -181,6 +183,16 @@ export const Settings: React.FC = () => {
               value={recipientEmail} 
               onChange={e => setRecipientEmail(e.target.value)}
               placeholder="e.g. info@corewalkers.com"
+              style={{ width: '100%' }}
+            />
+          </div>
+          <div className="input-group">
+            <label>BCC Emails (optional, comma-separated)</label>
+            <input 
+              type="text" 
+              value={bccEmails} 
+              onChange={e => setBccEmails(e.target.value)}
+              placeholder="e.g. boss@corewalkers.com, hr@corewalkers.com"
               style={{ width: '100%' }}
             />
           </div>

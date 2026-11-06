@@ -1,6 +1,6 @@
 import { prisma } from '../db';
 import * as XLSX from 'xlsx';
-import nodemailer from 'nodemailer';
+import nodemailer, { SendMailOptions } from 'nodemailer';
 import { format, subMonths, getDay, parseISO } from 'date-fns';
 import { formatInTimeZone, toZonedTime } from 'date-fns-tz';
 
@@ -195,7 +195,7 @@ export function createMailTransporter() {
 }
 
 // Send Monthly Report by Email
-export async function sendMonthlyReportEmail(targetMonth?: string, customRecipient?: string) {
+export async function sendMonthlyReportEmail(targetMonth?: string, customRecipient?: string, customBcc?: string | string[]) {
   // If no month is provided, default to the previous month
   const monthToSend = targetMonth || formatInTimeZone(subMonths(new Date(), 1), TIMEZONE, 'yyyy-MM');
   const recipient = customRecipient || process.env.REPORT_RECIPIENT_EMAIL || process.env.SMTP_USER;
@@ -208,14 +208,20 @@ export async function sendMonthlyReportEmail(targetMonth?: string, customRecipie
     throw new Error('No recipient email specified and REPORT_RECIPIENT_EMAIL is not set');
   }
 
+  // Parse BCC: from customBcc or REPORT_BCC_EMAILS env variable
+  let bccList: string | string[] | undefined = customBcc || process.env.REPORT_BCC_EMAILS;
+  if (typeof bccList === 'string' && bccList.trim()) {
+    bccList = bccList.split(/[,;]/).map(e => e.trim()).filter(Boolean);
+  }
+
   console.log(`[Monthly Report] Generating report for month: ${monthToSend}...`);
   const excelBuffer = await generateMonthlyExcelWorkbook(monthToSend);
 
   const transporter = createMailTransporter();
   const filename = `Attendance_Report_${monthToSend}.xlsx`;
 
-  console.log(`[Monthly Report] Sending email from ${process.env.SMTP_USER} to ${recipient}...`);
-  const info = await transporter.sendMail({
+  console.log(`[Monthly Report] Sending email from ${process.env.SMTP_USER} to ${recipient} (BCC: ${Array.isArray(bccList) ? bccList.join(', ') : 'none'})...`);
+  const mailOptions: SendMailOptions = {
     from: `"Core Walkers Office Tracker" <${process.env.SMTP_USER}>`,
     to: recipient,
     subject: `Monthly Attendance & Presence Report - ${monthToSend}`,
@@ -241,9 +247,15 @@ export async function sendMonthlyReportEmail(targetMonth?: string, customRecipie
         contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       },
     ],
-  });
+  };
+
+  if (bccList && (Array.isArray(bccList) ? bccList.length > 0 : true)) {
+    mailOptions.bcc = bccList;
+  }
+
+  const info = await transporter.sendMail(mailOptions);
 
   console.log(`[Monthly Report] Successfully sent to ${recipient}: ${info.messageId}`);
-  return { success: true, messageId: info.messageId, recipient, month: monthToSend };
+  return { success: true, messageId: info.messageId, recipient, bcc: bccList, month: monthToSend };
 }
 

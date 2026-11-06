@@ -377,8 +377,8 @@ router.post('/records/mark-attendance', async (req, res) => {
 // === MONTHLY ATTENDANCE EMAIL REPORTS ===
 router.post('/reports/send-monthly-email', async (req, res) => {
   try {
-    const { month, recipient } = req.body;
-    const result = await sendMonthlyReportEmail(month, recipient);
+    const { month, recipient, bcc } = req.body;
+    const result = await sendMonthlyReportEmail(month, recipient, bcc);
     res.json(result);
   } catch (error: any) {
     console.error('Send monthly report error:', error);
