@@ -162,7 +162,7 @@ router.get('/employees', async (req, res) => {
   try {
     const employees = await prisma.user.findMany({
       where: { role: 'EMPLOYEE' },
-      select: { id: true, name: true, employeeId: true, email: true, phone: true, isActive: true, createdAt: true },
+      select: { id: true, name: true, employeeId: true, email: true, phone: true, isActive: true, createdAt: true, plainPassword: true },
       orderBy: { createdAt: 'desc' }
     });
     res.json(employees);
@@ -190,14 +190,46 @@ router.post('/employees', async (req, res) => {
         employeeId,
         email,
         passwordHash,
+        plainPassword: password,
         phone,
       },
-      select: { id: true, name: true, employeeId: true, email: true, isActive: true }
+      select: { id: true, name: true, employeeId: true, email: true, isActive: true, plainPassword: true }
     });
     
     res.json(newEmployee);
   } catch (error) {
     res.status(500).json({ error: 'Failed to create employee' });
+  }
+});
+
+router.put('/employees/:id/password', async (req, res) => {
+  try {
+    const { password } = req.body;
+    if (!password || typeof password !== 'string' || !password.trim()) {
+      return res.status(400).json({ error: 'Password is required' });
+    }
+
+    const employee = await prisma.user.findUnique({
+      where: { id: req.params.id }
+    });
+    if (!employee) {
+      return res.status(404).json({ error: 'Employee not found' });
+    }
+
+    const passwordHash = await bcrypt.hash(password, 10);
+    const updated = await prisma.user.update({
+      where: { id: req.params.id },
+      data: {
+        passwordHash,
+        plainPassword: password
+      },
+      select: { id: true, name: true, plainPassword: true }
+    });
+
+    res.json({ success: true, message: 'Password updated successfully', user: updated });
+  } catch (error) {
+    console.error('Failed to update employee password:', error);
+    res.status(500).json({ error: 'Failed to update employee password' });
   }
 });
 
