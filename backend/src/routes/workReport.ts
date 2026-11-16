@@ -30,8 +30,8 @@ router.post('/submit', authenticate, async (req: AuthRequest, res) => {
     if (!summary || typeof summary !== 'string' || summary.trim().length === 0) {
       return res.status(400).json({ error: 'Work summary is required.' });
     }
-    if (summary.trim().length < 250) {
-      return res.status(400).json({ error: "Come on! At least 250 characters of work. If nothing else, just go 'blah blah blah'" });
+    if (summary.trim().length < 100) {
+      return res.status(400).json({ error: "Come on! At least 100 characters of work. If nothing else, just go 'blah blah blah'" });
     }
     if (summary.length > 500) {
       return res.status(400).json({ error: 'Summary must not exceed 500 characters.' });

@@ -4,7 +4,7 @@ import { Html5Qrcode } from 'html5-qrcode';
 import { useNavigate } from 'react-router-dom';
 
 const MAX_CHARS = 500;
-const MIN_CHARS = 250;
+const MIN_CHARS = 100;
 
 export const CheckIn: React.FC = () => {
   const { token } = useAuth();
@@ -151,7 +151,7 @@ export const CheckIn: React.FC = () => {
   // Submit daily work report (which also completes checkout)
   const handleReportSubmit = async () => {
     if (!reportSummary.trim() || reportSummary.trim().length < MIN_CHARS) {
-      setReportError("Come on! At least 250 characters of work. If nothing else, just go 'blah blah blah'");
+      setReportError("Come on! At least 100 characters of work. If nothing else, just go 'blah blah blah'");
       return;
     }
     if (reportSummary.length > MAX_CHARS) {
