@@ -25,6 +25,7 @@ model User {
 
   attendanceRecords AttendanceRecord[]
   salaryPayments    SalaryPayment[]
+  dailyWorkReports  DailyWorkReport[]
 }
 
 model SalaryPayment {
@@ -60,6 +61,20 @@ model Holiday {
   name      String
   type      String   @default("Holiday") // "Holiday", "Event", "Recreational Activities"
   createdAt DateTime @default(now())
+}
+
+model DailyWorkReport {
+  id          String   @id @default(uuid())
+  userId      String
+  date        String   // YYYY-MM-DD in Asia/Kathmandu
+  checkOutTime DateTime
+  summary     String   // Up to 500 chars
+  createdAt   DateTime @default(now())
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date])
+  @@index([userId, date])
 }
 
 model Settings {

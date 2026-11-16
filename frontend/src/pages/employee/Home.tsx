@@ -2,12 +2,63 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
+import { CheckCircle, Clock, ChevronDown, ChevronUp } from 'lucide-react';
+
+interface WorkReportEntry {
+  id: string;
+  userId: string;
+  name: string;
+  employeeId: string;
+  checkOutTime: string;
+  summary: string;
+  createdAt: string;
+}
+
+interface WorkReportSummary {
+  date: string;
+  submitted: WorkReportEntry[];
+  notSubmitted: { userId: string; name: string; employeeId: string }[];
+}
 
 export const Home: React.FC = () => {
   const { token } = useAuth();
   const navigate = useNavigate();
   const [stats, setStats] = useState<any>(null);
   const [manualTime, setManualTime] = useState('');
+
+  // Daily Work Reports (read-only for all employees)
+  const [workReportDate, setWorkReportDate] = useState<string>(
+    new Date().toISOString().slice(0, 10)
+  );
+  const [workReportSummary, setWorkReportSummary] = useState<WorkReportSummary | null>(null);
+  const [loadingReports, setLoadingReports] = useState(false);
+  const [expandedReport, setExpandedReport] = useState<string | null>(null);
+
+  const fetchWorkReports = async (date: string) => {
+    setLoadingReports(true);
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || ""}/api/work-reports/daily-summary?date=${date}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setWorkReportSummary(data);
+      } else {
+        setWorkReportSummary({ date, submitted: [], notSubmitted: [] });
+      }
+    } catch (err) {
+      console.error('Failed to fetch work reports', err);
+      setWorkReportSummary({ date, submitted: [], notSubmitted: [] });
+    } finally {
+      setLoadingReports(false);
+    }
+  };
+
+  useEffect(() => {
+    if (token) {
+      fetchWorkReports(workReportDate);
+    }
+  }, [token, workReportDate]);
 
   const fetchStats = async () => {
     const res = await fetch(`${import.meta.env.VITE_API_URL || ""}/api/attendance/me`, {
@@ -125,6 +176,146 @@ export const Home: React.FC = () => {
             </div>
           )}
         </div>
+      </div>
+
+      {/* ══════════════════════════════════════════════════════════
+          DAILY WORK REPORTS (TEAM OVERVIEW - VIEW ONLY)
+      ══════════════════════════════════════════════════════════ */}
+      <div style={{ marginTop: '2.5rem', marginBottom: '2rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+          <div>
+            <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '1.15rem' }}>
+              <span>📝</span> Daily Work Reports
+            </h3>
+            <p style={{ margin: '0.2rem 0 0', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+              Team work summaries submitted upon check-out
+            </p>
+          </div>
+
+          {/* Date filter */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--card-bg)', padding: '0.4rem 0.8rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
+            <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)' }}>Date:</span>
+            <input
+              type="date"
+              value={workReportDate}
+              onChange={e => setWorkReportDate(e.target.value)}
+              style={{ border: 'none', outline: 'none', fontSize: '0.825rem', color: 'var(--primary-color)', fontWeight: 600, cursor: 'pointer', background: 'transparent' }}
+            />
+          </div>
+        </div>
+
+        {loadingReports ? (
+          <div className="card" style={{ textAlign: 'center', padding: '1.5rem', color: 'var(--text-muted)', fontSize: '0.875rem' }}>
+            Loading team reports...
+          </div>
+        ) : !workReportSummary ? null : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+
+            {/* Submitted reports */}
+            {Array.isArray(workReportSummary.submitted) && workReportSummary.submitted.length > 0 && (
+              <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+                <div style={{ padding: '0.75rem 1.25rem', background: 'var(--primary-color)', color: 'white', fontWeight: 600, fontSize: '0.825rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <CheckCircle size={15} />
+                  Submitted — {workReportSummary.submitted.length} employee{workReportSummary.submitted.length !== 1 ? 's' : ''}
+                </div>
+                <div>
+                  {workReportSummary.submitted.map((entry, idx) => (
+                    <div key={entry.id} style={{ borderBottom: idx < workReportSummary.submitted.length - 1 ? '1px solid var(--border-light)' : 'none' }}>
+                      <div
+                        onClick={() => setExpandedReport(expandedReport === entry.id ? null : entry.id)}
+                        style={{
+                          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                          padding: '0.85rem 1.25rem', cursor: 'pointer',
+                          background: expandedReport === entry.id ? 'var(--bg-secondary)' : 'transparent',
+                          transition: 'background 0.15s ease'
+                        }}
+                      >
+                        <div>
+                          <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-main)' }}>{entry.name}</div>
+                          <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{entry.employeeId}</div>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            {entry.checkOutTime ? format(new Date(entry.checkOutTime), 'hh:mm a') : '-'}
+                          </span>
+                          <span style={{
+                            background: 'var(--badge-present-bg)', color: 'var(--badge-present-text)',
+                            padding: '0.15rem 0.5rem', borderRadius: '999px', fontSize: '0.68rem', fontWeight: 600
+                          }}>Submitted ✓</span>
+                          {expandedReport === entry.id ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
+                        </div>
+                      </div>
+
+                      {/* Expandable summary */}
+                      {expandedReport === entry.id && (
+                        <div style={{
+                          padding: '0 1.25rem 1rem 1.25rem',
+                          background: 'var(--bg-secondary)',
+                          borderTop: '1px solid var(--border-light)'
+                        }}>
+                          <p style={{ margin: '0.6rem 0 0.25rem', fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                            Work Summary
+                          </p>
+                          <div style={{
+                            background: 'var(--card-bg)', borderRadius: 'var(--radius-md)',
+                            padding: '0.75rem 0.85rem', fontSize: '0.85rem', lineHeight: '1.6',
+                            color: 'var(--text-main)', border: '1px solid var(--border-color)',
+                            whiteSpace: 'pre-wrap'
+                          }}>
+                            {entry.summary}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Pending employees */}
+            {Array.isArray(workReportSummary.notSubmitted) && workReportSummary.notSubmitted.length > 0 && (
+              <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+                <div style={{ padding: '0.75rem 1.25rem', background: '#f59e0b', color: 'white', fontWeight: 600, fontSize: '0.825rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Clock size={15} />
+                  Not Yet Submitted — {workReportSummary.notSubmitted.length} employee{workReportSummary.notSubmitted.length !== 1 ? 's' : ''}
+                </div>
+                <div style={{ padding: '0.25rem 0' }}>
+                  {workReportSummary.notSubmitted.map((e, idx) => (
+                    <div key={e.userId} style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                      padding: '0.75rem 1.25rem',
+                      borderBottom: idx < workReportSummary.notSubmitted.length - 1 ? '1px solid var(--border-light)' : 'none'
+                    }}>
+                      <div>
+                        <div style={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--text-main)' }}>{e.name}</div>
+                        <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{e.employeeId}</div>
+                      </div>
+                      <span style={{
+                        background: '#fef3c7', color: '#92400e',
+                        padding: '0.15rem 0.5rem', borderRadius: '999px', fontSize: '0.68rem', fontWeight: 600,
+                        border: '1px solid #fde68a'
+                      }}>Pending</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {(!Array.isArray(workReportSummary.submitted) || workReportSummary.submitted.length === 0) &&
+              (!Array.isArray(workReportSummary.notSubmitted) || workReportSummary.notSubmitted.length === 0) && (
+              <div className="card" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)', fontSize: '0.875rem' }}>
+                No active employees found.
+              </div>
+            )}
+
+            {Array.isArray(workReportSummary.submitted) && workReportSummary.submitted.length === 0 &&
+              Array.isArray(workReportSummary.notSubmitted) && workReportSummary.notSubmitted.length > 0 && (
+              <div style={{ textAlign: 'center', fontSize: '0.8rem', color: 'var(--text-muted)', padding: '0.5rem' }}>
+                No reports submitted on {workReportDate} yet.
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

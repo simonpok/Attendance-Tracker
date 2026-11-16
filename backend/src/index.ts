@@ -33,6 +33,8 @@ import attendanceRoutes from './routes/attendance';
 app.use('/api/attendance', attendanceRoutes);
 import leaderboardRoutes from './routes/leaderboard';
 app.use('/api/leaderboards', leaderboardRoutes);
+import workReportRoutes from './routes/workReport';
+app.use('/api/work-reports', workReportRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', time: new Date().toISOString() });

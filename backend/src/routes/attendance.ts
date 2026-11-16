@@ -124,6 +124,24 @@ router.post('/check-out', async (req: AuthRequest, res) => {
       return res.status(400).json({ error: 'Cannot check out without checking in first' });
     }
 
+    // Check if daily work report already submitted today
+    const existingReport = await prisma.dailyWorkReport.findUnique({
+      where: { userId_date: { userId: req.user!.userId, date: dateStr } }
+    });
+
+    // If no report yet for today → ask frontend to show the work report modal
+    // The actual check-out will happen when the report is submitted via /api/work-reports/submit
+    if (!existingReport) {
+      return res.status(200).json({
+        requiresWorkReport: true,
+        message: 'Please submit your daily work report to complete check-out.',
+        qrPayload,
+        lat,
+        lng
+      });
+    }
+
+    // Report already done (second checkout of the day) → proceed directly
     const record = await prisma.attendanceRecord.update({
       where: { id: latestRecord.id },
       data: { checkOutTime: new Date() }
