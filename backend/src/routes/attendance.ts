@@ -155,8 +155,21 @@ router.post('/check-out', async (req: AuthRequest, res) => {
 
 router.post('/manual-check-out', async (req: AuthRequest, res) => {
   try {
-    const { date, time } = req.body; // time is HH:mm string
+    const { date, time, summary } = req.body; // time is HH:mm string
     const targetDateStr = date || getYesterdayDateString();
+
+    if (!time) {
+      return res.status(400).json({ error: 'Check-out time is required.' });
+    }
+    if (!summary || typeof summary !== 'string' || summary.trim().length === 0) {
+      return res.status(400).json({ error: 'Work summary is required.' });
+    }
+    if (summary.trim().length < 100) {
+      return res.status(400).json({ error: "Come on! At least 100 characters of work. If nothing else, just go 'blah blah blah'" });
+    }
+    if (summary.length > 500) {
+      return res.status(400).json({ error: 'Summary must not exceed 500 characters.' });
+    }
 
     const record = await prisma.attendanceRecord.findFirst({
       where: { userId: req.user!.userId, date: targetDateStr },
@@ -170,17 +183,39 @@ router.post('/manual-check-out', async (req: AuthRequest, res) => {
     // Parse the date and time strings into a Date object in the correct timezone
     const checkOutTime = fromZonedTime(`${targetDateStr}T${time}:00`, TIMEZONE);
 
-    const updated = await prisma.attendanceRecord.update({
-      where: { id: record.id },
-      data: {
-        checkOutTime,
-        isManualCheckout: true
-      }
-    });
+    // Atomically update attendance checkout time and save daily work report
+    const [updatedRecord, report] = await prisma.$transaction([
+      prisma.attendanceRecord.update({
+        where: { id: record.id },
+        data: {
+          checkOutTime,
+          isManualCheckout: true
+        }
+      }),
+      prisma.dailyWorkReport.upsert({
+        where: {
+          userId_date: {
+            userId: req.user!.userId,
+            date: targetDateStr
+          }
+        },
+        update: {
+          checkOutTime,
+          summary: summary.trim()
+        },
+        create: {
+          userId: req.user!.userId,
+          date: targetDateStr,
+          checkOutTime,
+          summary: summary.trim()
+        }
+      })
+    ]);
 
-    res.json(updated);
-  } catch (error) {
-    res.status(500).json({ error: 'Manual check-out failed' });
+    res.json({ record: updatedRecord, report });
+  } catch (error: any) {
+    console.error('Manual check-out error:', error);
+    res.status(500).json({ error: error.message || 'Manual check-out failed' });
   }
 });
 

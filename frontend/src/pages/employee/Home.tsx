@@ -20,11 +20,17 @@ interface WorkReportSummary {
   notSubmitted: { userId: string; name: string; employeeId: string }[];
 }
 
+const MIN_CHARS = 100;
+const MAX_CHARS = 500;
+
 export const Home: React.FC = () => {
   const { token } = useAuth();
   const navigate = useNavigate();
   const [stats, setStats] = useState<any>(null);
   const [manualTime, setManualTime] = useState('');
+  const [manualSummary, setManualSummary] = useState('');
+  const [manualError, setManualError] = useState('');
+  const [submittingManual, setSubmittingManual] = useState(false);
 
   // Daily Work Reports (read-only for all employees)
   const [workReportDate, setWorkReportDate] = useState<string>(
@@ -78,23 +84,52 @@ export const Home: React.FC = () => {
     e.preventDefault();
     if (!stats?.missedCheckout) return;
 
-    const res = await fetch(`${import.meta.env.VITE_API_URL || ""}/api/attendance/manual-check-out`, {
-      method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}` 
-      },
-      body: JSON.stringify({ 
-        date: stats.missedCheckout.date, 
-        time: manualTime 
-      })
-    });
+    if (!manualTime) {
+      setManualError('Please select your check-out time.');
+      return;
+    }
+    if (!manualSummary.trim() || manualSummary.trim().length < MIN_CHARS) {
+      setManualError("Come on! At least 100 characters of work. If nothing else, just go 'blah blah blah'");
+      return;
+    }
+    if (manualSummary.length > MAX_CHARS) {
+      setManualError(`Summary must not exceed ${MAX_CHARS} characters.`);
+      return;
+    }
 
-    if (res.ok) {
-      alert('Manual check-out recorded');
-      fetchStats();
-    } else {
-      alert('Failed to save manual check-out');
+    setSubmittingManual(true);
+    setManualError('');
+
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || ""}/api/attendance/manual-check-out`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}` 
+        },
+        body: JSON.stringify({ 
+          date: stats.missedCheckout.date, 
+          time: manualTime,
+          summary: manualSummary.trim()
+        })
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        alert('Check-out and daily work report recorded successfully! 🎉');
+        setManualTime('');
+        setManualSummary('');
+        setManualError('');
+        fetchStats();
+        fetchWorkReports(workReportDate);
+      } else {
+        setManualError(data.error || 'Failed to save manual check-out');
+      }
+    } catch (err: any) {
+      setManualError('Network error. Please try again.');
+    } finally {
+      setSubmittingManual(false);
     }
   };
 
@@ -103,20 +138,100 @@ export const Home: React.FC = () => {
   return (
     <div className="content-scroll">
       {stats.missedCheckout && (
-        <div className="card text-danger" style={{ background: '#fef2f2', border: '1px solid #fecaca', marginBottom: '1.5rem' }}>
-          <h3 style={{ marginBottom: '0.5rem' }}>Missed Check-Out Alert!</h3>
-          <p style={{ fontSize: '0.875rem', marginBottom: '1rem' }}>
-            You forgot to check out yesterday ({stats.missedCheckout.date}). Please enter your check-out time.
+        <div className="card text-danger" style={{ background: '#fef2f2', border: '1px solid #fecaca', marginBottom: '1.5rem', padding: '1.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem' }}>
+            <span style={{ fontSize: '1.3rem' }}>⚠️</span>
+            <h3 style={{ margin: 0, color: '#b91c1c', fontSize: '1.15rem' }}>Missed Check-Out Alert!</h3>
+          </div>
+          <p style={{ fontSize: '0.875rem', marginBottom: '1.25rem', color: '#7f1d1d', lineHeight: '1.5' }}>
+            You forgot to check out on <strong>{stats.missedCheckout.date}</strong>. Please enter your check-out time and submit your daily work report for that day to complete your attendance.
           </p>
-          <form onSubmit={handleManualCheckout} style={{ display: 'flex', gap: '0.5rem' }}>
-            <input 
-              type="time" 
-              required 
-              value={manualTime}
-              onChange={e => setManualTime(e.target.value)}
-              style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid #ccc' }}
-            />
-            <button type="submit" className="primary-btn" style={{ padding: '0.5rem 1rem' }}>Submit</button>
+          <form onSubmit={handleManualCheckout} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div>
+              <label style={{ display: 'block', fontWeight: 600, fontSize: '0.85rem', marginBottom: '0.4rem', color: 'var(--text-main)' }}>
+                Check-out Time:
+              </label>
+              <input 
+                type="time" 
+                required 
+                value={manualTime}
+                onChange={e => {
+                  setManualTime(e.target.value);
+                  setManualError('');
+                }}
+                style={{ padding: '0.6rem 0.8rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', background: 'var(--card-bg)', color: 'var(--text-main)', fontSize: '0.9rem' }}
+              />
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontWeight: 600, fontSize: '0.85rem', marginBottom: '0.4rem', color: 'var(--text-main)' }}>
+                What did you work on on {stats.missedCheckout.date}?
+              </label>
+              <textarea
+                value={manualSummary}
+                onChange={e => {
+                  setManualSummary(e.target.value);
+                  setManualError('');
+                }}
+                placeholder="• Completed task A...&#10;• Fixed issue B...&#10;• Collaborated with team on C..."
+                rows={4}
+                maxLength={MAX_CHARS}
+                style={{
+                  width: '100%',
+                  resize: 'vertical',
+                  padding: '0.75rem',
+                  borderRadius: 'var(--radius-md)',
+                  border: `1px solid ${manualSummary.length > MAX_CHARS ? '#ef4444' : 'var(--border-color)'}`,
+                  background: 'var(--card-bg)',
+                  color: 'var(--text-main)',
+                  fontSize: '0.9rem',
+                  lineHeight: '1.6',
+                  fontFamily: 'inherit',
+                  boxSizing: 'border-box'
+                }}
+              />
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                marginTop: '0.3rem',
+                fontSize: '0.78rem',
+                color: manualSummary.length < MIN_CHARS ? '#d97706' : '#10b981',
+                fontWeight: 500
+              }}>
+                <span>
+                  {manualSummary.length < MIN_CHARS 
+                    ? `Min. ${MIN_CHARS} chars (${MIN_CHARS - manualSummary.length} more needed)` 
+                    : `Requirement met ✓`}
+                </span>
+                <span>
+                  {manualSummary.length} / {MAX_CHARS}
+                </span>
+              </div>
+            </div>
+
+            {manualError && (
+              <div style={{
+                padding: '0.6rem 0.9rem',
+                background: '#fee2e2',
+                color: '#b91c1c',
+                borderRadius: 'var(--radius-md)',
+                fontSize: '0.85rem',
+                border: '1px solid #fca5a5'
+              }}>
+                {manualError}
+              </div>
+            )}
+
+            <div>
+              <button 
+                type="submit" 
+                className="primary-btn" 
+                disabled={submittingManual || manualSummary.length > MAX_CHARS}
+                style={{ padding: '0.65rem 1.4rem' }}
+              >
+                {submittingManual ? 'Submitting...' : '✅ Submit Work Report & Check Out'}
+              </button>
+            </div>
           </form>
         </div>
       )}
