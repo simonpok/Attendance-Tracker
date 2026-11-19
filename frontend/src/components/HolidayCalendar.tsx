@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSaturday, startOfWeek, endOfWeek, isSameMonth, isSameDay, addMonths, subMonths } from 'date-fns';
 import { ChevronLeft, ChevronRight, Info } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
 
 interface Holiday {
   id: string;
@@ -22,6 +23,9 @@ export const HolidayCalendar: React.FC<HolidayCalendarProps> = ({
   onAddHoliday, 
   onDeleteHoliday 
 }) => {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
+
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [date, setDate] = useState('');
   const [name, setName] = useState('');
@@ -74,7 +78,14 @@ export const HolidayCalendar: React.FC<HolidayCalendarProps> = ({
             <select 
               value={type} 
               onChange={e => setType(e.target.value)}
-              style={{ width: '100%', padding: '0.75rem', borderRadius: 'var(--radius-md)', border: '1px solid #e2e8f0', background: 'white' }}
+              style={{ 
+                width: '100%', 
+                padding: '0.75rem', 
+                borderRadius: 'var(--radius-md)', 
+                border: isDark ? '1px solid var(--border-color)' : '1px solid #e2e8f0', 
+                background: isDark ? 'var(--input-bg)' : 'white',
+                color: isDark ? 'var(--input-color)' : 'inherit'
+              }}
             >
               <option value="Holiday">Holiday</option>
               <option value="Event">Event</option>
@@ -90,9 +101,16 @@ export const HolidayCalendar: React.FC<HolidayCalendarProps> = ({
       )}
 
       <div className="card" style={{ padding: '1rem', overflowX: 'auto' }}>
-        <div className="calendar-grid" style={{ minWidth: '600px', display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', border: '1px solid #e2e8f0' }}>
+        <div className="calendar-grid" style={{ minWidth: '600px', display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', border: `1px solid ${isDark ? 'var(--border-color)' : '#e2e8f0'}` }}>
           {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-            <div key={day} style={{ padding: '0.75rem', textAlign: 'center', fontWeight: 'bold', backgroundColor: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+            <div key={day} style={{ 
+              padding: '0.75rem', 
+              textAlign: 'center', 
+              fontWeight: 'bold', 
+              backgroundColor: isDark ? 'var(--table-header-bg)' : '#f8fafc', 
+              color: isDark ? 'var(--text-muted)' : 'inherit',
+              borderBottom: `1px solid ${isDark ? 'var(--border-color)' : '#e2e8f0'}` 
+            }}>
               {day}
             </div>
           ))}
@@ -104,22 +122,24 @@ export const HolidayCalendar: React.FC<HolidayCalendarProps> = ({
             const isCurrentMonth = isSameMonth(day, monthStart);
 
             // Determine color based on type
-            let bgColor = isCurrentMonth ? 'white' : '#f1f5f9';
-            let labelColor = '#94a3b8'; // Default for Saturday
+            let bgColor = isCurrentMonth 
+              ? (isDark ? 'var(--card-bg)' : 'white') 
+              : (isDark ? '#0b0f19' : '#f1f5f9');
+            let labelColor = isDark ? '#64748b' : '#94a3b8'; // Default for Saturday
             
             if (holiday && isCurrentMonth) {
               if (holiday.type === 'Event') {
-                bgColor = '#fffbeb'; // Light gold
-                labelColor = '#f59e0b'; // Golden
+                bgColor = isDark ? '#362007' : '#fffbeb'; // Dark amber in dark mode, light gold in light mode
+                labelColor = isDark ? '#d97706' : '#f59e0b'; // Golden
               } else if (holiday.type === 'Recreational Activities') {
-                bgColor = '#faf5ff'; // Light purple
-                labelColor = '#a855f7'; // Purple
+                bgColor = isDark ? '#271142' : '#faf5ff'; // Dark purple in dark mode, light purple in light mode
+                labelColor = isDark ? '#9333ea' : '#a855f7'; // Purple
               } else {
-                bgColor = '#fef2f2'; // Light red
+                bgColor = isDark ? '#3b1219' : '#fef2f2'; // Dark red in dark mode, light red in light mode
                 labelColor = '#ef4444'; // Red
               }
             } else if (isSat && isCurrentMonth) {
-              bgColor = '#f8fafc';
+              bgColor = isDark ? '#141d2e' : '#f8fafc';
             }
 
             return (
@@ -128,18 +148,24 @@ export const HolidayCalendar: React.FC<HolidayCalendarProps> = ({
                 className={`calendar-day ${isHoliday ? 'holiday' : ''} ${!isCurrentMonth ? 'other-month' : ''}`}
                 style={{ 
                   height: isAdmin ? '100px' : '80px', 
-                  borderRight: (i + 1) % 7 === 0 ? 'none' : '1px solid #e2e8f0', 
-                  borderBottom: '1px solid #e2e8f0',
+                  borderRight: (i + 1) % 7 === 0 ? 'none' : `1px solid ${isDark ? 'var(--border-color)' : '#e2e8f0'}`, 
+                  borderBottom: `1px solid ${isDark ? 'var(--border-color)' : '#e2e8f0'}`,
                   padding: '0.5rem',
                   position: 'relative',
                   backgroundColor: bgColor,
-                  color: isCurrentMonth ? 'inherit' : '#94a3b8',
+                  color: isCurrentMonth ? (isDark ? 'var(--text-main)' : 'inherit') : (isDark ? '#475569' : '#94a3b8'),
                   transition: 'background-color 0.2s',
                   cursor: isCurrentMonth && isAdmin ? 'pointer' : 'default'
                 }}
                 onClick={() => isAdmin && isCurrentMonth && setDate(dateStr)}
               >
-                <div style={{ fontWeight: isSameDay(day, new Date()) ? 'bold' : 'normal', color: isSameDay(day, new Date()) ? 'var(--primary-color)' : 'inherit', fontSize: '0.875rem' }}>
+                <div style={{ 
+                  fontWeight: isSameDay(day, new Date()) ? 'bold' : 'normal', 
+                  color: isSameDay(day, new Date()) 
+                    ? (isDark ? '#818cf8' : 'var(--primary-color)') 
+                    : (isCurrentMonth ? (isDark ? '#f1f5f9' : 'inherit') : (isDark ? '#475569' : '#94a3b8')), 
+                  fontSize: '0.875rem' 
+                }}>
                   {format(day, 'd')}
                 </div>
                 {isHoliday && isCurrentMonth && (
@@ -182,10 +208,10 @@ export const HolidayCalendar: React.FC<HolidayCalendarProps> = ({
 
       <style>{`
         .calendar-day:hover {
-          background-color: ${isAdmin ? '#f8fafc' : 'transparent'} !important;
+          background-color: ${isAdmin ? (isDark ? 'var(--bg-secondary)' : '#f8fafc') : 'transparent'} !important;
         }
         .calendar-day.holiday:hover {
-          background-color: ${isAdmin ? '#fee2e2' : 'transparent'} !important;
+          background-color: ${isAdmin ? (isDark ? 'rgba(239, 68, 68, 0.25)' : '#fee2e2') : 'transparent'} !important;
         }
         .other-month {
           pointer-events: none;
