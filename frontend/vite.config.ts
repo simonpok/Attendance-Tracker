@@ -10,12 +10,13 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
       manifest: {
-        name: 'OfficeTrack',
-        short_name: 'OfficeTrack',
-        description: 'Personalized Office Attendance System',
+        name: 'CW Attendence',
+        short_name: 'CW Attendence',
+        description: 'CW Attendence System',
         theme_color: '#0f172a',
-        background_color: '#ffffff',
+        background_color: '#0f172a',
         display: 'standalone',
+        orientation: 'portrait',
         icons: [
           {
             src: 'pwa-192x192.png',
