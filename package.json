@@ -5,10 +5,10 @@
     "node": "20.x"
   },
   "scripts": {
-    "install:all": "npm install --prefix backend --legacy-peer-deps && npm install --prefix frontend --legacy-peer-deps",
+    "install:all": "npm install --prefix backend --legacy-peer-deps --no-audit --no-fund && npm install --prefix frontend --legacy-peer-deps --no-audit --no-fund",
     "build": "npm run build:backend && npm run build:frontend",
-    "build:frontend": "cd frontend && npm install --legacy-peer-deps && npm run build",
-    "build:backend": "cd backend && npm install --legacy-peer-deps && npx prisma@5.22.0 generate && npm run build",
+    "build:frontend": "cd frontend && npm install --legacy-peer-deps --no-audit --no-fund && npm run build",
+    "build:backend": "cd backend && npm install --legacy-peer-deps --no-audit --no-fund && npx prisma@5.22.0 generate && npm run build",
     "dev": "concurrently \"npm run dev --prefix backend\" \"npm run dev --prefix frontend\"",
     "start": "cd backend && npx prisma@5.22.0 db push --accept-data-loss && npx prisma@5.22.0 db seed && npm start"
   },
