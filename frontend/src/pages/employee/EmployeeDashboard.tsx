@@ -72,7 +72,7 @@ export const EmployeeDashboard: React.FC = () => {
         </Link>
         <Link to="/employee/leaderboard" className={`nav-item ${isActive('/employee/leaderboard')}`} style={{ textDecoration: 'none' }}>
           <Trophy size={24} />
-          <span>Your Stats</span>
+          <span>Stats</span>
         </Link>
       </nav>
     </div>
