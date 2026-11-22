@@ -178,9 +178,9 @@ router.get('/daily-summary', authenticate, async (req: AuthRequest, res) => {
       orderBy: { createdAt: 'asc' }
     });
 
-    // All active employees
+    // All active employees who require daily work reports
     const allEmployees = await prisma.user.findMany({
-      where: { role: 'EMPLOYEE', isActive: true },
+      where: { role: 'EMPLOYEE', isActive: true, requiresWorkReport: true },
       select: { id: true, name: true, employeeId: true }
     });
 
@@ -219,7 +219,7 @@ router.get('/admin-summary', authenticate, async (req: AuthRequest, res) => {
     });
 
     const allEmployees = await prisma.user.findMany({
-      where: { role: 'EMPLOYEE', isActive: true },
+      where: { role: 'EMPLOYEE', isActive: true, requiresWorkReport: true },
       select: { id: true, name: true, employeeId: true }
     });
 

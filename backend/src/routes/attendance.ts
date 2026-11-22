@@ -124,6 +124,21 @@ router.post('/check-out', async (req: AuthRequest, res) => {
       return res.status(400).json({ error: 'Cannot check out without checking in first' });
     }
 
+    // Check if daily work report is enabled for this employee
+    const user = await prisma.user.findUnique({
+      where: { id: req.user!.userId },
+      select: { requiresWorkReport: true }
+    });
+
+    // If admin turned OFF work report for this employee, directly check out!
+    if (user && user.requiresWorkReport === false) {
+      const record = await prisma.attendanceRecord.update({
+        where: { id: latestRecord.id },
+        data: { checkOutTime: new Date() }
+      });
+      return res.json(record);
+    }
+
     // Check if daily work report already submitted today
     const existingReport = await prisma.dailyWorkReport.findUnique({
       where: { userId_date: { userId: req.user!.userId, date: dateStr } }
@@ -161,14 +176,23 @@ router.post('/manual-check-out', async (req: AuthRequest, res) => {
     if (!time) {
       return res.status(400).json({ error: 'Check-out time is required.' });
     }
-    if (!summary || typeof summary !== 'string' || summary.trim().length === 0) {
-      return res.status(400).json({ error: 'Work summary is required.' });
-    }
-    if (summary.trim().length < 100) {
-      return res.status(400).json({ error: "Come on! At least 100 characters of work. If nothing else, just go 'blah blah blah'" });
-    }
-    if (summary.length > 500) {
-      return res.status(400).json({ error: 'Summary must not exceed 500 characters.' });
+
+    const user = await prisma.user.findUnique({
+      where: { id: req.user!.userId },
+      select: { requiresWorkReport: true }
+    });
+    const needsReport = user ? user.requiresWorkReport !== false : true;
+
+    if (needsReport) {
+      if (!summary || typeof summary !== 'string' || summary.trim().length === 0) {
+        return res.status(400).json({ error: 'Work summary is required.' });
+      }
+      if (summary.trim().length < 100) {
+        return res.status(400).json({ error: "Come on! At least 100 characters of work. If nothing else, just go 'blah blah blah'" });
+      }
+      if (summary.length > 500) {
+        return res.status(400).json({ error: 'Summary must not exceed 500 characters.' });
+      }
     }
 
     const record = await prisma.attendanceRecord.findFirst({
@@ -183,34 +207,43 @@ router.post('/manual-check-out', async (req: AuthRequest, res) => {
     // Parse the date and time strings into a Date object in the correct timezone
     const checkOutTime = fromZonedTime(`${targetDateStr}T${time}:00`, TIMEZONE);
 
-    // Atomically update attendance checkout time and save daily work report
-    const [updatedRecord, report] = await prisma.$transaction([
+    // Atomically update attendance checkout time and optionally save daily work report
+    const dbOperations: any[] = [
       prisma.attendanceRecord.update({
         where: { id: record.id },
         data: {
           checkOutTime,
           isManualCheckout: true
         }
-      }),
-      prisma.dailyWorkReport.upsert({
-        where: {
-          userId_date: {
-            userId: req.user!.userId,
-            date: targetDateStr
-          }
-        },
-        update: {
-          checkOutTime,
-          summary: summary.trim()
-        },
-        create: {
-          userId: req.user!.userId,
-          date: targetDateStr,
-          checkOutTime,
-          summary: summary.trim()
-        }
       })
-    ]);
+    ];
+
+    if (summary && typeof summary === 'string' && summary.trim().length > 0) {
+      dbOperations.push(
+        prisma.dailyWorkReport.upsert({
+          where: {
+            userId_date: {
+              userId: req.user!.userId,
+              date: targetDateStr
+            }
+          },
+          update: {
+            checkOutTime,
+            summary: summary.trim()
+          },
+          create: {
+            userId: req.user!.userId,
+            date: targetDateStr,
+            checkOutTime,
+            summary: summary.trim()
+          }
+        })
+      );
+    }
+
+    const results = await prisma.$transaction(dbOperations);
+    const updatedRecord = results[0];
+    const report = results[1] || null;
 
     res.json({ record: updatedRecord, report });
   } catch (error: any) {
@@ -231,7 +264,7 @@ router.get('/me', async (req: AuthRequest, res) => {
 
     const user = await prisma.user.findUnique({
       where: { id: req.user!.userId },
-      select: { attendanceAdjustment: true, absentAdjustments: true, salaryAdjustment: true, createdAt: true }
+      select: { attendanceAdjustment: true, absentAdjustments: true, salaryAdjustment: true, createdAt: true, requiresWorkReport: true }
     });
 
     const adjustment = user?.attendanceAdjustment || 0;
@@ -335,6 +368,7 @@ router.get('/me', async (req: AuthRequest, res) => {
       totalPresent,
       totalAbsent,
       currentStreak,
+      requiresWorkReport: user?.requiresWorkReport ?? true,
       missedCheckout: missedCheckout ? yesterdayRecord : null,
       todayRecord,
       recentRecords: records.slice(0, 10) // Only send 10 recent

@@ -88,13 +88,17 @@ export const Home: React.FC = () => {
       setManualError('Please select your check-out time.');
       return;
     }
-    if (!manualSummary.trim() || manualSummary.trim().length < MIN_CHARS) {
-      setManualError("Come on! At least 100 characters of work. If nothing else, just go 'blah blah blah'");
-      return;
-    }
-    if (manualSummary.length > MAX_CHARS) {
-      setManualError(`Summary must not exceed ${MAX_CHARS} characters.`);
-      return;
+
+    const needsReport = stats?.requiresWorkReport !== false;
+    if (needsReport) {
+      if (!manualSummary.trim() || manualSummary.trim().length < MIN_CHARS) {
+        setManualError("Come on! At least 100 characters of work. If nothing else, just go 'blah blah blah'");
+        return;
+      }
+      if (manualSummary.length > MAX_CHARS) {
+        setManualError(`Summary must not exceed ${MAX_CHARS} characters.`);
+        return;
+      }
     }
 
     setSubmittingManual(true);
@@ -117,7 +121,7 @@ export const Home: React.FC = () => {
       const data = await res.json();
 
       if (res.ok) {
-        alert('Check-out and daily work report recorded successfully! 🎉');
+        alert(needsReport ? 'Check-out and daily work report recorded successfully! 🎉' : 'Check-out recorded successfully! 🎉');
         setManualTime('');
         setManualSummary('');
         setManualError('');
@@ -135,6 +139,8 @@ export const Home: React.FC = () => {
 
   if (!stats) return <div className="loading-spinner">Loading...</div>;
 
+  const needsReport = stats?.requiresWorkReport !== false;
+
   return (
     <div className="content-scroll">
       {stats.missedCheckout && (
@@ -144,7 +150,7 @@ export const Home: React.FC = () => {
             <h3 style={{ margin: 0, color: '#b91c1c', fontSize: '1.15rem' }}>Missed Check-Out Alert!</h3>
           </div>
           <p style={{ fontSize: '0.875rem', marginBottom: '1.25rem', color: '#7f1d1d', lineHeight: '1.5' }}>
-            You forgot to check out on <strong>{stats.missedCheckout.date}</strong>. Please enter your check-out time and submit your daily work report for that day to complete your attendance.
+            You forgot to check out on <strong>{stats.missedCheckout.date}</strong>. Please enter your check-out time{needsReport ? ' and submit your daily work report for that day' : ''} to complete your attendance.
           </p>
           <form onSubmit={handleManualCheckout} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <div>
@@ -163,51 +169,53 @@ export const Home: React.FC = () => {
               />
             </div>
 
-            <div>
-              <label style={{ display: 'block', fontWeight: 600, fontSize: '0.85rem', marginBottom: '0.4rem', color: 'var(--text-main)' }}>
-                What did you work on on {stats.missedCheckout.date}?
-              </label>
-              <textarea
-                value={manualSummary}
-                onChange={e => {
-                  setManualSummary(e.target.value);
-                  setManualError('');
-                }}
-                placeholder="• Completed task A...&#10;• Fixed issue B...&#10;• Collaborated with team on C..."
-                rows={4}
-                maxLength={MAX_CHARS}
-                style={{
-                  width: '100%',
-                  resize: 'vertical',
-                  padding: '0.75rem',
-                  borderRadius: 'var(--radius-md)',
-                  border: `1px solid ${manualSummary.length > MAX_CHARS ? '#ef4444' : 'var(--border-color)'}`,
-                  background: 'var(--card-bg)',
-                  color: 'var(--text-main)',
-                  fontSize: '0.9rem',
-                  lineHeight: '1.6',
-                  fontFamily: 'inherit',
-                  boxSizing: 'border-box'
-                }}
-              />
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                marginTop: '0.3rem',
-                fontSize: '0.78rem',
-                color: manualSummary.length < MIN_CHARS ? '#d97706' : '#10b981',
-                fontWeight: 500
-              }}>
-                <span>
-                  {manualSummary.length < MIN_CHARS 
-                    ? `Min. ${MIN_CHARS} chars (${MIN_CHARS - manualSummary.length} more needed)` 
-                    : `Requirement met ✓`}
-                </span>
-                <span>
-                  {manualSummary.length} / {MAX_CHARS}
-                </span>
+            {needsReport && (
+              <div>
+                <label style={{ display: 'block', fontWeight: 600, fontSize: '0.85rem', marginBottom: '0.4rem', color: 'var(--text-main)' }}>
+                  What did you work on on {stats.missedCheckout.date}?
+                </label>
+                <textarea
+                  value={manualSummary}
+                  onChange={e => {
+                    setManualSummary(e.target.value);
+                    setManualError('');
+                  }}
+                  placeholder="• Completed task A...&#10;• Fixed issue B...&#10;• Collaborated with team on C..."
+                  rows={4}
+                  maxLength={MAX_CHARS}
+                  style={{
+                    width: '100%',
+                    resize: 'vertical',
+                    padding: '0.75rem',
+                    borderRadius: 'var(--radius-md)',
+                    border: `1px solid ${manualSummary.length > MAX_CHARS ? '#ef4444' : 'var(--border-color)'}`,
+                    background: 'var(--card-bg)',
+                    color: 'var(--text-main)',
+                    fontSize: '0.9rem',
+                    lineHeight: '1.6',
+                    fontFamily: 'inherit',
+                    boxSizing: 'border-box'
+                  }}
+                />
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  marginTop: '0.3rem',
+                  fontSize: '0.78rem',
+                  color: manualSummary.length < MIN_CHARS ? '#d97706' : '#10b981',
+                  fontWeight: 500
+                }}>
+                  <span>
+                    {manualSummary.length < MIN_CHARS 
+                      ? `Min. ${MIN_CHARS} chars (${MIN_CHARS - manualSummary.length} more needed)` 
+                      : `Requirement met ✓`}
+                  </span>
+                  <span>
+                    {manualSummary.length} / {MAX_CHARS}
+                  </span>
+                </div>
               </div>
-            </div>
+            )}
 
             {manualError && (
               <div style={{
@@ -226,10 +234,10 @@ export const Home: React.FC = () => {
               <button 
                 type="submit" 
                 className="primary-btn" 
-                disabled={submittingManual || manualSummary.length > MAX_CHARS}
+                disabled={submittingManual || (needsReport && manualSummary.length > MAX_CHARS)}
                 style={{ padding: '0.65rem 1.4rem' }}
               >
-                {submittingManual ? 'Submitting...' : '✅ Submit Work Report & Check Out'}
+                {submittingManual ? 'Submitting...' : (needsReport ? '✅ Submit Work Report & Check Out' : '✅ Complete Check Out')}
               </button>
             </div>
           </form>

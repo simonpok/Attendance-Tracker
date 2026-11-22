@@ -17,6 +17,7 @@ model User {
   plainPassword String?
   phone        String?
   isActive     Boolean  @default(true)
+  requiresWorkReport Boolean @default(true)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   attendanceAdjustment Int @default(0)

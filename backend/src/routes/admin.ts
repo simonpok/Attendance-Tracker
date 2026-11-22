@@ -163,7 +163,7 @@ router.get('/employees', async (req, res) => {
   try {
     const employees = await prisma.user.findMany({
       where: { role: 'EMPLOYEE' },
-      select: { id: true, name: true, employeeId: true, email: true, phone: true, isActive: true, createdAt: true, plainPassword: true },
+      select: { id: true, name: true, employeeId: true, email: true, phone: true, isActive: true, requiresWorkReport: true, createdAt: true, plainPassword: true },
       orderBy: { createdAt: 'desc' }
     });
     res.json(employees);
@@ -174,7 +174,7 @@ router.get('/employees', async (req, res) => {
 
 router.post('/employees', async (req, res) => {
   try {
-    const { name, employeeId, email, password, phone } = req.body;
+    const { name, employeeId, email, password, phone, requiresWorkReport } = req.body;
     
     const existing = await prisma.user.findFirst({
       where: { OR: [{ email }, { employeeId }] }
@@ -193,8 +193,9 @@ router.post('/employees', async (req, res) => {
         passwordHash,
         plainPassword: password,
         phone,
+        requiresWorkReport: requiresWorkReport !== undefined ? Boolean(requiresWorkReport) : true,
       },
-      select: { id: true, name: true, employeeId: true, email: true, isActive: true, plainPassword: true }
+      select: { id: true, name: true, employeeId: true, email: true, isActive: true, requiresWorkReport: true, plainPassword: true }
     });
     
     res.json(newEmployee);
@@ -245,6 +246,21 @@ router.put('/employees/:id/status', async (req, res) => {
     res.json(updated);
   } catch (error) {
     res.status(500).json({ error: 'Failed to update employee status' });
+  }
+});
+
+router.put('/employees/:id/work-report-toggle', async (req, res) => {
+  try {
+    const { requiresWorkReport } = req.body;
+    const updated = await prisma.user.update({
+      where: { id: req.params.id },
+      data: { requiresWorkReport: Boolean(requiresWorkReport) },
+      select: { id: true, name: true, requiresWorkReport: true }
+    });
+    res.json(updated);
+  } catch (error) {
+    console.error('Failed to update work report requirement:', error);
+    res.status(500).json({ error: 'Failed to update work report requirement' });
   }
 });
 

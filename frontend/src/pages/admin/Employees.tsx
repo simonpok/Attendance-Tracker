@@ -9,6 +9,7 @@ interface Employee {
   email: string;
   phone: string;
   isActive: boolean;
+  requiresWorkReport?: boolean;
   createdAt: string;
   plainPassword?: string | null;
 }
@@ -98,6 +99,32 @@ export const Employees: React.FC = () => {
       fetchEmployees();
     } catch (err) {
       console.error('Failed to update status', err);
+    }
+  };
+
+  const toggleWorkReport = async (id: string, currentRequirement: boolean) => {
+    try {
+      const newStatus = !currentRequirement;
+      // Optimistic update
+      setEmployees(prev => prev.map(emp => 
+        emp.id === id ? { ...emp, requiresWorkReport: newStatus } : emp
+      ));
+
+      const res = await fetch(`${import.meta.env.VITE_API_URL || ""}/api/admin/employees/${id}/work-report-toggle`, {
+        method: 'PUT',
+        headers: { 
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}` 
+        },
+        body: JSON.stringify({ requiresWorkReport: newStatus })
+      });
+
+      if (!res.ok) {
+        fetchEmployees();
+      }
+    } catch (err) {
+      console.error('Failed to toggle work report requirement', err);
+      fetchEmployees();
     }
   };
 
@@ -263,6 +290,7 @@ export const Employees: React.FC = () => {
               <th style={{ padding: '1rem' }}>Email</th>
               <th style={{ padding: '1rem' }}>Password</th>
               <th style={{ padding: '1rem' }}>Status</th>
+              <th style={{ padding: '1rem' }}>Daily Report</th>
               <th style={{ padding: '1rem' }}>Actions</th>
             </tr>
           </thead>
@@ -339,6 +367,37 @@ export const Employees: React.FC = () => {
                     <span className={emp.isActive ? 'text-success' : 'text-danger'} style={{ fontWeight: 500 }}>
                       {emp.isActive ? 'Active' : 'Inactive'}
                     </span>
+                  </td>
+                  <td style={{ padding: '1rem' }}>
+                    <button 
+                      type="button"
+                      onClick={() => toggleWorkReport(emp.id, emp.requiresWorkReport !== false)}
+                      title={`Click to turn ${emp.requiresWorkReport !== false ? 'OFF' : 'ON'} daily work report for ${emp.name}`}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.4rem',
+                        padding: '0.35rem 0.75rem',
+                        borderRadius: '9999px',
+                        fontSize: '0.78rem',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        border: '1px solid',
+                        borderColor: emp.requiresWorkReport !== false ? '#86efac' : 'var(--border-color)',
+                        background: emp.requiresWorkReport !== false ? '#dcfce7' : 'var(--bg-secondary)',
+                        color: emp.requiresWorkReport !== false ? '#15803d' : 'var(--text-muted)',
+                        transition: 'all 0.2s ease',
+                      }}
+                    >
+                      <span style={{
+                        display: 'inline-block',
+                        width: '7px',
+                        height: '7px',
+                        borderRadius: '50%',
+                        backgroundColor: emp.requiresWorkReport !== false ? '#16a34a' : '#94a3b8'
+                      }}></span>
+                      {emp.requiresWorkReport !== false ? 'ON' : 'OFF'}
+                    </button>
                   </td>
                   <td style={{ padding: '1rem' }}>
                     <div style={{ display: 'flex', gap: '1rem' }}>
