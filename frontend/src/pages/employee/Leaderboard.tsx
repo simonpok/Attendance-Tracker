@@ -48,6 +48,31 @@ export const Leaderboard: React.FC = () => {
     return (a.name || '').localeCompare(b.name || '');
   });
 
+  // Calculate ranks: same streaks get the same position, 0 streak gets 'Last'
+  let currentRank = 0;
+  let prevStreak = -1;
+
+  const rankedStreaks = streaks.map((item: any) => {
+    if (!item.currentStreak || item.currentStreak === 0) {
+      return {
+        ...item,
+        rank: 0,
+        rankWord: 'Last',
+      };
+    }
+
+    if (item.currentStreak !== prevStreak) {
+      currentRank++;
+      prevStreak = item.currentStreak;
+    }
+
+    return {
+      ...item,
+      rank: currentRank,
+      rankWord: getOrdinalWord(currentRank),
+    };
+  });
+
   return (
     <div className="content-scroll" style={{ paddingBottom: '3rem' }}>
       <h2 style={{ marginBottom: '1.5rem' }}>Stats</h2>
@@ -127,15 +152,15 @@ export const Leaderboard: React.FC = () => {
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-            {streaks.length === 0 ? (
+            {rankedStreaks.length === 0 ? (
               <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '1rem' }}>No streak data available</p>
             ) : (
-              streaks.map((item: any, index: number) => {
-                const rankWord = getOrdinalWord(index + 1);
+              rankedStreaks.map((item: any) => {
+                const rankWord = item.rankWord;
                 const isUser = user?.id === item.id;
-                const isTop1 = index === 0 && item.currentStreak > 0;
-                const isTop2 = index === 1 && item.currentStreak > 0;
-                const isTop3 = index === 2 && item.currentStreak > 0;
+                const isTop1 = item.rank === 1;
+                const isTop2 = item.rank === 2;
+                const isTop3 = item.rank === 3;
 
                 let rankBadgeBg = isDark ? '#1e293b' : '#f1f5f9';
                 let rankBadgeColor = isDark ? '#94a3b8' : '#64748b';
